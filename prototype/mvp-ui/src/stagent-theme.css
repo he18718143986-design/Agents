@@ -1,5 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap");
-
+/*
+ * 不引用 Google Fonts 等境外 CDN（大陆访问被阻断会拖慢首屏 10s+）。
+ * 全部使用系统字体栈；已安装 Noto 系列的用户仍会优先命中。
+ */
 :root {
   --ink: #14110d;
   --ink-soft: #1e1810;
@@ -15,9 +17,9 @@
   --brass: #b6904f;
   --hairline: #382f22;
   --hairline-soft: #2a2317;
-  --display: "Noto Serif SC", "Songti SC", serif;
-  --body: "Noto Sans SC", "PingFang SC", sans-serif;
-  --mono: "IBM Plex Mono", monospace;
+  --display: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "微软雅黑", sans-serif;
+  --mono: "IBM Plex Mono", "SF Mono", Consolas, "Courier New", monospace;
   --radius-s: 8px;
   --radius-m: 14px;
   --radius-l: 20px;

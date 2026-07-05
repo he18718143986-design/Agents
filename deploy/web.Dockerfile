@@ -1,9 +1,14 @@
-FROM node:22-slim
+# 大陆服务器 Docker Hub 直连受限时，用镜像站替换基础镜像，例如：
+#   docker compose build --build-arg NODE_BASE=docker.m.daocloud.io/library/node:22-slim
+ARG NODE_BASE=node:22-slim
+FROM ${NODE_BASE}
+
+# npm 用国内镜像，避免境外源超时
+ARG NPM_REGISTRY=https://registry.npmmirror.com
 
 WORKDIR /app/prototype/mvp-ui
 COPY prototype/mvp-ui/package.json prototype/mvp-ui/package-lock.json ./
-# 国内服务器如网络不畅，可加 --registry=https://registry.npmmirror.com
-RUN npm ci
+RUN npm ci --registry=${NPM_REGISTRY}
 
 COPY prototype/mvp-ui ./
 RUN npm run build
