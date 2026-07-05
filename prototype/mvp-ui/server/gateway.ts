@@ -125,6 +125,55 @@ async function forwardConversationCreate(
   return { status: upstream.status, json: responseBody };
 }
 
+/**
+ * Token usage for a conversation (c_create measurement). Reads the
+ * conversation state's stats.usage_to_metrics and aggregates token counts.
+ */
+export async function handleConversationUsage(
+  ctx: GatewayContext,
+  conversationId: string,
+): Promise<GatewayResult> {
+  if (!/^[0-9a-f-]{8,64}$/i.test(conversationId)) {
+    return jsonResult(400, { error: "invalid conversation id" });
+  }
+  const res = await fetch(
+    `${ctx.agentServer}/api/conversations/${conversationId}`,
+    { signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS) },
+  );
+  if (!res.ok) {
+    return jsonResult(res.status, { error: await res.text() });
+  }
+  const data = (await res.json()) as {
+    stats?: { usage_to_metrics?: Record<string, unknown> };
+  };
+  const usageToMetrics = data.stats?.usage_to_metrics ?? {};
+
+  let promptTokens = 0;
+  let completionTokens = 0;
+  let cost = 0;
+  for (const raw of Object.values(usageToMetrics)) {
+    const metrics = raw as {
+      accumulated_cost?: number;
+      accumulated_token_usage?: {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+      };
+    };
+    cost += metrics.accumulated_cost ?? 0;
+    promptTokens += metrics.accumulated_token_usage?.prompt_tokens ?? 0;
+    completionTokens += metrics.accumulated_token_usage?.completion_tokens ?? 0;
+  }
+
+  return jsonResult(200, {
+    conversationId,
+    promptTokens,
+    completionTokens,
+    totalTokens: promptTokens + completionTokens,
+    accumulatedCostUsd: cost,
+    raw: usageToMetrics,
+  });
+}
+
 export async function handleEngineStatus(
   ctx: GatewayContext,
 ): Promise<GatewayResult> {

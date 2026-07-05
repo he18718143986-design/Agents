@@ -54,6 +54,11 @@ git clone https://gitee.com/你的账号/Agents.git stagent
 cd stagent/deploy
 cat > .env <<'EOF'
 DEEPSEEK_API_KEY=sk-你的真实密钥
+# 内测访问控制（强烈建议设置，防止 API 额度被盗用）
+BASIC_AUTH_USER=stagent
+BASIC_AUTH_PASSWORD=换成强密码
+# PocketBase 管理员（务必改掉默认值）
+PB_ADMIN_PASSWORD=换成强密码
 # 可选：
 # LLM_MODEL=deepseek/deepseek-chat
 # LLM_BASE_URL=https://api.deepseek.com
@@ -99,17 +104,15 @@ docker compose up -d --build         # 更新代码后重新发布
 docker compose down                  # 停止（数据卷保留）
 ```
 
-用户项目产物与**各应用的 PocketBase 数据库**（`workspaces/pocketbase/<slug>/`，含用户真实业务数据）都在 Docker 卷 `stagent_workspaces` 中，务必配置定时备份：
+用户项目产物与**各应用的 PocketBase 数据库**（`workspaces/pocketbase/<slug>/`，含用户真实业务数据）都在 Docker 卷 `stagent_workspaces` 中，务必配置定时备份（脚本已内置，含 14 天滚动清理）：
 
 ```bash
-docker run --rm -v stagent_workspaces:/data -v /backup:/backup alpine \
-  tar czf /backup/workspaces-$(date +%F).tar.gz -C /data .
+# crontab -e 加入：
+0 3 * * * bash /path/to/stagent/deploy/backup.sh /backup stagent_workspaces
 ```
 
 ## 安全注意事项
 
-- **当前原型没有用户账号体系**：任何知道地址的人都能消耗你的 DeepSeek 额度。公网开放前建议至少加 nginx Basic Auth：
-  `sudo apt install apache2-utils && sudo htpasswd -c /etc/nginx/.htpasswd admin`，
-  并在 nginx `location /` 中加入 `auth_basic "Stagent"; auth_basic_user_file /etc/nginx/.htpasswd;`
+- **当前原型没有用户账号体系**：任何知道地址的人都能消耗你的 DeepSeek 额度。**在 `.env` 中设置 `BASIC_AUTH_USER` + `BASIC_AUTH_PASSWORD` 即全站启用 Basic Auth（内置，无需 nginx 配置）**；如已用 nginx，也可叠加 nginx 层 Basic Auth
 - agent-server 拥有容器内的终端执行能力，请勿将 8000 端口暴露到公网（compose 中仅 expose 给内网）
 - 定期查看 DeepSeek 控制台的用量与费用告警

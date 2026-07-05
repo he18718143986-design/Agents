@@ -8,6 +8,7 @@ import {
   agentServerErrorHint,
   handleBuildBootstrap,
   handleCoachBootstrap,
+  handleConversationUsage,
   handleDeployBootstrap,
   handleEngineStatus,
   type GatewayContext,
@@ -42,6 +43,25 @@ if (!existsSync(path.join(distDir, "index.html"))) {
 
 const ctx: GatewayContext = { repoRoot, agentServer };
 const app = express();
+
+// 内测访问控制：设置 BASIC_AUTH_USER + BASIC_AUTH_PASSWORD 后全站启用 Basic Auth。
+const basicUser = process.env.BASIC_AUTH_USER?.trim();
+const basicPassword = process.env.BASIC_AUTH_PASSWORD?.trim();
+if (basicUser && basicPassword) {
+  const expected =
+    "Basic " + Buffer.from(`${basicUser}:${basicPassword}`).toString("base64");
+  app.use((req, res, next) => {
+    if (req.headers.authorization === expected) {
+      next();
+      return;
+    }
+    res
+      .status(401)
+      .set("WWW-Authenticate", 'Basic realm="Stagent"')
+      .send("Authentication required");
+  });
+  console.log("Basic Auth enabled");
+}
 const proxy = httpProxy.createProxyServer({
   target: agentServer,
   changeOrigin: true,
@@ -92,6 +112,14 @@ app.get("/prototype/api/engine-status", async (_req, res) => {
   }
 });
 
+app.get("/prototype/api/conversation-usage/:id", async (req, res) => {
+  try {
+    send(res, await handleConversationUsage(ctx, req.params.id));
+  } catch (error) {
+    gatewayErrorHandler(res, error);
+  }
+});
+
 app.post("/prototype/api/bootstrap-conversation", async (req, res) => {
   try {
     send(res, await handleCoachBootstrap(ctx, req.body ?? {}));
@@ -130,6 +158,15 @@ app.use((req, res, next) => {
 const server = createServer(app);
 
 server.on("upgrade", (req, socket, head) => {
+  if (basicUser && basicPassword) {
+    const expected =
+      "Basic " + Buffer.from(`${basicUser}:${basicPassword}`).toString("base64");
+    if (req.headers.authorization !== expected) {
+      socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+      socket.destroy();
+      return;
+    }
+  }
   if (req.url?.startsWith("/sockets/")) {
     proxy.ws(req, socket, head);
     return;
