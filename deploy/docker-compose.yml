@@ -1,0 +1,46 @@
+name: stagent
+
+services:
+  agent-server:
+    build:
+      context: ..
+      dockerfile: deploy/agent-server.Dockerfile
+    environment:
+      OPENHANDS_AGENT_SERVER_CONFIG_PATH: /app/prototype/agent-server.config.json
+    volumes:
+      - workspaces:/app/prototype/workspaces
+      - conversations:/app/prototype/.agent_tmp/conversations
+    expose:
+      - "8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 15s
+      timeout: 8s
+      retries: 10
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+    environment:
+      PORT: "8080"
+      AGENT_SERVER_URL: http://agent-server:8000
+      REPO_ROOT: /app
+      # 在 .env 文件中配置真实密钥，不要写进本文件提交到仓库
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+    volumes:
+      - workspaces:/app/prototype/workspaces
+    ports:
+      - "8080:8080"
+    depends_on:
+      agent-server:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  workspaces:
+  conversations:
