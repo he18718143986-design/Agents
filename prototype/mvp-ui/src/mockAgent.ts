@@ -73,15 +73,3 @@ export function detectStyleFeedback(text: string): {
   };
 }
 
-export function detectBuildFeedback(text: string): string | null {
-  if (/手机|移动端|打不开/.test(text)) {
-    return "收到，我会优先修复手机端显示问题，并调整导出字段顺序。请稍等，正在更新预览…";
-  }
-  if (/导出|excel|字段|顺序/.test(text)) {
-    return "好的，我会把导出字段顺序调整为：姓名、部门、日期、事由。正在更新预览…";
-  }
-  if (/颜色|样式|按钮/.test(text)) {
-    return "这是功能问题还是样式问题？如果是样式，我们可以回到风格阶段微调；如果是功能，我会直接修复。";
-  }
-  return null;
-}

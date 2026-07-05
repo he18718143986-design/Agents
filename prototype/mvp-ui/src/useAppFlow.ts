@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { appReducer, initialState } from "./store";
-import { detectBuildFeedback, detectStyleFeedback } from "./mockAgent";
+import { detectStyleFeedback } from "./mockAgent";
 import {
   OpenHandsClient,
   extractAgentMessageText,
@@ -8,9 +8,17 @@ import {
 } from "./engine/openhandsClient";
 import {
   loadStoredEngineConfig,
+  loadStoredEngineMode,
   saveStoredEngineConfig,
+  saveStoredEngineMode,
   type EngineBootstrapConfig,
 } from "./engine/apiConfig";
+import {
+  demoChangeRequestReply,
+  demoCoachReply,
+  demoWelcomeText,
+} from "./engine/demoCoach";
+import { createDemoAppUrl, type DemoEnv } from "./engine/demoBuilder";
 import { buildStageContext } from "./engine/stageContext";
 import {
   BuildClient,
@@ -38,7 +46,13 @@ import {
   type CanvasPatch,
   type GateHints,
 } from "./engine/parseCanvasPatch";
-import type { AppState, ChatMessage, PathChoice, TechChoice } from "./types";
+import type {
+  AppState,
+  ChatMessage,
+  PathChoice,
+  PersistedWorkspaceSnapshot,
+  TechChoice,
+} from "./types";
 import {
   log,
   logCoachResponse,
@@ -85,6 +99,23 @@ export function useAppFlow() {
   const deployFinishHandledRef = useRef(false);
   const initGenerationRef = useRef(0);
   const hasUserMessageRef = useRef(false);
+  const demoRef = useRef({
+    stageMessageCount: 0,
+    changeLog: [] as string[],
+    timers: [] as number[],
+  });
+
+  const clearDemoTimers = useCallback(() => {
+    for (const timer of demoRef.current.timers) {
+      window.clearTimeout(timer);
+    }
+    demoRef.current.timers = [];
+  }, []);
+
+  const isDemoMode = useCallback(
+    () => stateRef.current.engineMode === "demo",
+    [],
+  );
 
   const pushAgentMessage = useCallback(async (content: string, pause = 700) => {
     dispatch({ type: "SET_AGENT_TYPING", value: true });
@@ -110,6 +141,7 @@ export function useAppFlow() {
 
   const sendEngineSystemNotice = useCallback(
     async (text: string) => {
+      if (stateRef.current.engineMode === "demo") return;
       await sendToEngine(`[系统通知] ${text}`);
     },
     [sendToEngine],
@@ -150,6 +182,109 @@ export function useAppFlow() {
       });
     },
     [],
+  );
+
+  const demoWarm = useCallback(
+    () =>
+      stateRef.current.styleWarmth > 55 || stateRef.current.selectedStyleId === "B",
+    [],
+  );
+
+  const runDemoBuild = useCallback(
+    async (changeRequest?: string) => {
+      clearDemoTimers();
+      if (changeRequest?.trim()) {
+        demoRef.current.changeLog.push(changeRequest.trim());
+      }
+      dispatch({ type: "SET_BUILD_ERROR", error: null });
+      dispatch({ type: "SET_BUILD_RUNNING", value: true });
+      dispatch({ type: "SET_BUILD_PROGRESS", value: 10 });
+
+      [30, 55, 80, 95].forEach((value, index) => {
+        demoRef.current.timers.push(
+          window.setTimeout(() => {
+            dispatch({ type: "SET_BUILD_PROGRESS", value });
+          }, 400 * (index + 1)),
+        );
+      });
+
+      demoRef.current.timers.push(
+        window.setTimeout(() => {
+          const url = createDemoAppUrl({
+            requirements: stateRef.current.requirements,
+            warm: demoWarm(),
+            env: "workspace",
+            changeLog: demoRef.current.changeLog,
+          });
+          dispatch({ type: "SET_BUILD_RUNNING", value: false });
+          dispatch({ type: "SET_BUILD_PREVIEW_URL", url });
+          dispatch({ type: "SET_BUILD_DONE" });
+          void pushAgentMessage(
+            "第一版做好了（体验模式演示应用）。右侧「试用预览」可以真实操作：添加记录、删除、导出 CSV 都可用，数据保存在你的浏览器里。试用后请对照「验收清单」逐条勾选。",
+            300,
+          );
+        }, 2200),
+      );
+    },
+    [clearDemoTimers, demoWarm, pushAgentMessage],
+  );
+
+  const runDemoDeploy = useCallback(
+    async (phase: DeployPhase) => {
+      clearDemoTimers();
+      const env: DemoEnv = phase === "staging" ? "staging" : "production";
+
+      if (phase === "staging") {
+        dispatch({ type: "SET_STAGING_ERROR", error: null });
+        dispatch({ type: "SET_STAGING_RUNNING", value: true });
+        dispatch({ type: "SET_STAGING_PROGRESS", value: 15 });
+        [40, 70, 90].forEach((value, index) => {
+          demoRef.current.timers.push(
+            window.setTimeout(() => {
+              dispatch({ type: "SET_STAGING_PROGRESS", value });
+            }, 350 * (index + 1)),
+          );
+        });
+        demoRef.current.timers.push(
+          window.setTimeout(() => {
+            const url = createDemoAppUrl({
+              requirements: stateRef.current.requirements,
+              warm: demoWarm(),
+              env,
+              changeLog: demoRef.current.changeLog,
+            });
+            dispatch({ type: "SET_STAGING_PREVIEW_URL", url });
+            dispatch({ type: "SET_STAGING_ERROR", error: null });
+            dispatch({ type: "SET_STAGING_READY" });
+            void pushAgentMessage(
+              "测试环境已就绪（体验模式）。请在右侧打开测试链接自测，建议也发给同事试用；确认没问题后勾选上线检查项，再决定是否正式上线。",
+              300,
+            );
+          }, 1600),
+        );
+        return;
+      }
+
+      dispatch({ type: "SET_PRODUCTION_ERROR", error: null });
+      dispatch({ type: "SET_PRODUCTION_RUNNING", value: true });
+      demoRef.current.timers.push(
+        window.setTimeout(() => {
+          const url = createDemoAppUrl({
+            requirements: stateRef.current.requirements,
+            warm: demoWarm(),
+            env,
+            changeLog: demoRef.current.changeLog,
+          });
+          dispatch({ type: "SET_PRODUCTION_URL", url });
+          dispatch({ type: "COMPLETE_GO_LIVE" });
+          void pushAgentMessage(
+            "已上线正式环境（体验模式）。右侧可以打开正式地址。提示：体验模式的应用运行在你的浏览器里，连接真实引擎后会部署到 workspace。",
+            300,
+          );
+        }, 1400),
+      );
+    },
+    [clearDemoTimers, demoWarm, pushAgentMessage],
   );
 
   const finalizeBuildRun = useCallback(
@@ -496,8 +631,10 @@ export function useAppFlow() {
       }
 
       saveStoredEngineConfig(config);
+      saveStoredEngineMode("real");
       clientRef.current = client;
       dispatch({ type: "SET_CONVERSATION_ID", id: client.conversationId });
+      dispatch({ type: "SET_ENGINE_MODE", mode: "real" });
       dispatch({ type: "SET_ENGINE_READY", value: true });
 
       client.subscribe((event) => {
@@ -589,6 +726,29 @@ export function useAppFlow() {
     [bootstrapEngine],
   );
 
+  const connectDemo = useCallback(
+    async (forceWelcome = false) => {
+      initGenerationRef.current += 1;
+      clientRef.current?.close();
+      clientRef.current = null;
+      clearDemoTimers();
+      demoRef.current.stageMessageCount = 0;
+      demoRef.current.changeLog = [];
+
+      saveStoredEngineMode("demo");
+      dispatch({ type: "SET_ENGINE_MODE", mode: "demo" });
+      dispatch({ type: "SET_ENGINE_READY", value: true });
+      dispatch({ type: "SET_ENGINE_CONNECTING", value: false });
+      dispatch({ type: "SET_ENGINE_ERROR", error: null });
+      dispatch({ type: "SET_SHOW_API_CONFIG", value: false });
+
+      if (forceWelcome || stateRef.current.messages.length === 0) {
+        await pushAgentMessage(demoWelcomeText(), 300);
+      }
+    },
+    [clearDemoTimers, pushAgentMessage],
+  );
+
   const openApiConfig = useCallback(() => {
     dispatch({ type: "SET_SHOW_API_CONFIG", value: true });
     dispatch({ type: "SET_ENGINE_ERROR", error: null });
@@ -601,18 +761,23 @@ export function useAppFlow() {
   }, []);
 
   useEffect(() => {
+    const savedMode = loadStoredEngineMode();
     const saved = loadStoredEngineConfig();
-    if (saved) {
+    if (savedMode === "demo") {
+      void connectDemo();
+    } else if (saved) {
       void bootstrapEngine({
         apiKey: saved.apiKey,
         model: saved.model,
         baseUrl: saved.baseUrl || undefined,
+        useServerKey: saved.useServerKey,
       });
     } else {
       dispatch({ type: "SET_SHOW_API_CONFIG", value: true });
     }
     return () => {
       initGenerationRef.current += 1;
+      clearDemoTimers();
       clientRef.current?.close();
       clientRef.current = null;
       buildUnsubRef.current?.();
@@ -622,7 +787,7 @@ export function useAppFlow() {
       deployClientRef.current?.close();
       deployClientRef.current = null;
     };
-  }, [bootstrapEngine]);
+  }, [bootstrapEngine, connectDemo, clearDemoTimers]);
 
   const sendUserMessage = useCallback(
     async (raw: string) => {
@@ -638,6 +803,7 @@ export function useAppFlow() {
       const current = stateRef.current;
       trackUserMessage(text, current.stage);
       hasUserMessageRef.current = true;
+      const demoMode = current.engineMode === "demo";
       let nextState = current;
 
       if (current.stage === 0 && !current.pathEndedBuy) {
@@ -653,14 +819,35 @@ export function useAppFlow() {
             buttonSize: feedback.buttonSize,
           });
         }
-      } else if (current.stage === 3) {
-        const feedback = detectBuildFeedback(text);
-        if (feedback) {
-          dispatch({ type: "REQUEST_CHANGES" });
-          await pushAgentMessage(feedback, 400);
+      } else if (current.stage === 3 && current.awaitingChangeRequest) {
+        // The next user message after「还不行，继续改」is the change request.
+        dispatch({ type: "SET_AWAITING_CHANGE_REQUEST", value: false });
+        await pushAgentMessage(demoChangeRequestReply(text), 300);
+        if (demoMode) {
+          await runDemoBuild(text);
+        } else {
           await runRealBuild(text);
-          return;
         }
+        return;
+      }
+
+      if (demoMode) {
+        dispatch({ type: "SET_AGENT_TYPING", value: true });
+        await delay(650);
+        const reply = demoCoachReply({
+          stage: nextState.stage,
+          text,
+          requirements: nextState.requirements,
+          userMessageCountInStage: demoRef.current.stageMessageCount,
+        });
+        demoRef.current.stageMessageCount += 1;
+        applyAgentStructuredPayload(reply.patch, reply.gateHints);
+        dispatch({
+          type: "ADD_MESSAGE",
+          message: createMessage("agent", reply.text),
+        });
+        dispatch({ type: "SET_AGENT_TYPING", value: false });
+        return;
       }
 
       try {
@@ -673,7 +860,13 @@ export function useAppFlow() {
         dispatch({ type: "SET_AGENT_TYPING", value: false });
       }
     },
-    [runRealBuild, sendToEngine],
+    [
+      applyAgentStructuredPayload,
+      pushAgentMessage,
+      runDemoBuild,
+      runRealBuild,
+      sendToEngine,
+    ],
   );
 
   const selectPath = useCallback((choice: PathChoice) => {
@@ -685,6 +878,14 @@ export function useAppFlow() {
   const confirmPathSelfBuild = useCallback(async () => {
     logStateAction({ type: "CONFIRM_PATH_SELF_BUILD" });
     dispatch({ type: "CONFIRM_PATH_SELF_BUILD" });
+    if (isDemoMode()) {
+      demoRef.current.stageMessageCount = 0;
+      await pushAgentMessage(
+        "好，按自研路线继续。接下来把需求补全：目标用户是谁、怎样算验收通过、什么时候要用上。直接在对话里告诉我，我会帮你整理到右侧需求文档。",
+        400,
+      );
+      return;
+    }
     try {
       await sendEngineSystemNotice(
         "用户已在右侧确认走自研路线，进入需求整理阶段。请继续通过对话帮用户补全验收标准与时间预期。",
@@ -695,11 +896,20 @@ export function useAppFlow() {
         error: error instanceof Error ? error.message : String(error),
       });
     }
-  }, [sendEngineSystemNotice]);
+  }, [isDemoMode, pushAgentMessage, sendEngineSystemNotice]);
 
   const confirmPathBuy = useCallback(async () => {
     dispatch({ type: "CONFIRM_PATH_BUY" });
     const isSaas = stateRef.current.pathChoice === "saas";
+    if (isDemoMode()) {
+      await pushAgentMessage(
+        isSaas
+          ? "好的，外部 SaaS 方案已确认。右侧是开通引导：建议先试用 1～2 家产品，再签年度合同。"
+          : "好的，低代码方案已确认。右侧是开通步骤：先用免费版把核心台账搭出来验证流程。",
+        400,
+      );
+      return;
+    }
     try {
       await sendEngineSystemNotice(
         isSaas
@@ -712,11 +922,23 @@ export function useAppFlow() {
         error: error instanceof Error ? error.message : String(error),
       });
     }
-  }, [sendEngineSystemNotice]);
+  }, [isDemoMode, pushAgentMessage, sendEngineSystemNotice]);
 
   const confirmRequirements = useCallback(async () => {
     logStateAction({ type: "CONFIRM_REQUIREMENTS" });
     dispatch({ type: "CONFIRM_REQUIREMENTS" });
+    if (isDemoMode()) {
+      demoRef.current.stageMessageCount = 0;
+      const reply = demoCoachReply({
+        stage: 2,
+        text: "",
+        requirements: stateRef.current.requirements,
+        userMessageCountInStage: 0,
+      });
+      applyAgentStructuredPayload(reply.patch, reply.gateHints);
+      await pushAgentMessage(reply.text, 400);
+      return;
+    }
     try {
       await sendEngineSystemNotice(
         "用户已确认需求。请根据需求中的持久化/登录/集成需求，在 canvas-json 中输出 techGuidance 与 techRecommendation，并引导其在右侧选择技术路线和界面风格。",
@@ -727,7 +949,12 @@ export function useAppFlow() {
         error: error instanceof Error ? error.message : String(error),
       });
     }
-  }, [sendEngineSystemNotice]);
+  }, [
+    applyAgentStructuredPayload,
+    isDemoMode,
+    pushAgentMessage,
+    sendEngineSystemNotice,
+  ]);
 
   const selectTech = useCallback((techId: TechChoice) => {
     if (techId) {
@@ -742,26 +969,50 @@ export function useAppFlow() {
   const confirmStyle = useCallback(async () => {
     logStateAction({ type: "CONFIRM_STYLE" });
     dispatch({ type: "CONFIRM_STYLE" });
+    if (isDemoMode()) {
+      await pushAgentMessage("技术路线和风格已确认。开始制作演示应用…", 400);
+      await runDemoBuild();
+      return;
+    }
     await pushAgentMessage(
       "技术路线和风格已确认。正在启动 workspace 制作 Agent，请稍候…",
       500,
     );
     await runRealBuild();
-  }, [pushAgentMessage, runRealBuild]);
+  }, [isDemoMode, pushAgentMessage, runDemoBuild, runRealBuild]);
 
   const completeAcceptance = useCallback(async () => {
     dispatch({ type: "COMPLETE_ACCEPTANCE" });
+    if (isDemoMode()) {
+      await pushAgentMessage("验收通过。正在准备测试环境…", 400);
+      await runDemoDeploy("staging");
+      return;
+    }
     await pushAgentMessage(
       "验收通过。正在启动测试环境部署 Agent，请稍候…",
       500,
     );
     await runDeploy("staging");
-  }, [pushAgentMessage, runDeploy]);
+  }, [isDemoMode, pushAgentMessage, runDemoDeploy, runDeploy]);
 
   const confirmGoLive = useCallback(async () => {
+    if (isDemoMode()) {
+      await pushAgentMessage("正在发布正式环境…", 300);
+      await runDemoDeploy("production");
+      return;
+    }
     await pushAgentMessage("正在启动正式环境部署 Agent，请稍候…", 400);
     await runDeploy("production");
-  }, [pushAgentMessage, runDeploy]);
+  }, [isDemoMode, pushAgentMessage, runDemoDeploy, runDeploy]);
+
+  const requestChanges = useCallback(async () => {
+    dispatch({ type: "REQUEST_CHANGES" });
+    dispatch({ type: "SET_AWAITING_CHANGE_REQUEST", value: true });
+    await pushAgentMessage(
+      "好的。请直接在对话里描述要修改的地方（例如：表格加一列负责人、导出按钮放最上面）。你发的下一条消息会作为修改要求交给制作 Agent。",
+      300,
+    );
+  }, [pushAgentMessage]);
 
   const pauseProject = useCallback(async () => {
     await pushAgentMessage(
@@ -831,8 +1082,12 @@ export function useAppFlow() {
   const retryBuild = useCallback(async () => {
     dispatch({ type: "SET_BUILD_ERROR", error: null });
     dispatch({ type: "SET_USE_MOCK_PREVIEW", value: false });
+    if (isDemoMode()) {
+      await runDemoBuild();
+      return;
+    }
     await runRealBuild();
-  }, [runRealBuild]);
+  }, [isDemoMode, runDemoBuild, runRealBuild]);
 
   const retryDeploy = useCallback(
     async (phase: DeployPhase) => {
@@ -841,9 +1096,13 @@ export function useAppFlow() {
       } else {
         dispatch({ type: "SET_PRODUCTION_ERROR", error: null });
       }
+      if (isDemoMode()) {
+        await runDemoDeploy(phase);
+        return;
+      }
       await runDeploy(phase);
     },
-    [runDeploy],
+    [isDemoMode, runDemoDeploy, runDeploy],
   );
 
   const acceptMockPreview = useCallback(async () => {
@@ -856,10 +1115,30 @@ export function useAppFlow() {
     );
   }, [pushAgentMessage]);
 
-  const hydrateFromSnapshot = useCallback((snapshot: Partial<AppState>) => {
-    dispatch({ type: "HYDRATE_STATE", snapshot });
-    hasUserMessageRef.current = (snapshot.messages?.length ?? 0) > 0;
-  }, []);
+  const hydrateFromSnapshot = useCallback(
+    (snapshot: Partial<PersistedWorkspaceSnapshot>) => {
+      const next: Partial<AppState> = { ...snapshot };
+
+      // Demo artifacts are Blob URLs that die on reload — regenerate them
+      // from the persisted requirements so restored projects stay usable.
+      const requirements = snapshot.requirements;
+      if (requirements) {
+        const warm =
+          (snapshot.styleWarmth ?? 50) > 55 || snapshot.selectedStyleId === "B";
+        const regenerate = (url: string | null | undefined, env: DemoEnv) =>
+          url && url.startsWith("blob:")
+            ? createDemoAppUrl({ requirements, warm, env, changeLog: [] })
+            : url ?? null;
+        next.buildPreviewUrl = regenerate(snapshot.buildPreviewUrl, "workspace");
+        next.stagingPreviewUrl = regenerate(snapshot.stagingPreviewUrl, "staging");
+        next.productionUrl = regenerate(snapshot.productionUrl, "production");
+      }
+
+      dispatch({ type: "HYDRATE_STATE", snapshot: next });
+      hasUserMessageRef.current = (snapshot.messages?.length ?? 0) > 0;
+    },
+    [],
+  );
 
   const revertToAcceptance = useCallback(async () => {
     dispatch({ type: "REVERT_TO_ACCEPTANCE" });
@@ -878,6 +1157,7 @@ export function useAppFlow() {
   }, []);
 
   const resetDemo = useCallback(async () => {
+    clearDemoTimers();
     buildUnsubRef.current?.();
     buildClientRef.current?.close();
     buildClientRef.current = null;
@@ -885,20 +1165,24 @@ export function useAppFlow() {
     deployClientRef.current?.close();
     deployClientRef.current = null;
     dispatch({ type: "RESET_DEMO" });
+    const savedMode = loadStoredEngineMode();
     const saved = loadStoredEngineConfig();
-    if (saved) {
+    if (savedMode === "demo") {
+      await connectDemo(true);
+    } else if (saved) {
       await bootstrapEngine({
         apiKey: saved.apiKey,
         model: saved.model,
         baseUrl: saved.baseUrl || undefined,
+        useServerKey: saved.useServerKey,
       });
     } else {
       dispatch({ type: "SET_SHOW_API_CONFIG", value: true });
     }
-  }, [bootstrapEngine]);
+  }, [bootstrapEngine, clearDemoTimers, connectDemo]);
 
   useEffect(() => {
-    logGateDiagnostics(state, "state.snapshot");
+    logGateDiagnostics(stateRef.current, "state.snapshot");
   }, [
     state.stage,
     state.pendingGate,
@@ -921,6 +1205,7 @@ export function useAppFlow() {
     confirmStyle,
     completeAcceptance,
     confirmGoLive,
+    requestChanges,
     pauseProject,
     acknowledgeFeasibility,
     enterIterationMode,
@@ -935,6 +1220,7 @@ export function useAppFlow() {
     hydrateFromSnapshot,
     resetDemo,
     connectEngine,
+    connectDemo,
     openApiConfig,
     closeApiConfig,
     dispatch,

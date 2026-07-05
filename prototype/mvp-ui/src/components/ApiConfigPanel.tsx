@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import {
   MODEL_PRESETS,
+  fetchEngineStatus,
   type EngineBootstrapConfig,
+  type EngineStatus,
   type StoredEngineConfig,
 } from "../engine/apiConfig";
 
@@ -11,6 +13,7 @@ interface ApiConfigPanelProps {
   error: string | null;
   savedConfig: StoredEngineConfig | null;
   onConnect: (config: EngineBootstrapConfig) => void;
+  onDemoMode: () => void;
   onClose?: () => void;
   allowClose: boolean;
 }
@@ -35,6 +38,7 @@ export function ApiConfigPanel({
   error,
   savedConfig,
   onConnect,
+  onDemoMode,
   onClose,
   allowClose,
 }: ApiConfigPanelProps) {
@@ -43,8 +47,24 @@ export function ApiConfigPanel({
   const [model, setModel] = useState<string>(MODEL_PRESETS[0].model);
   const [baseUrl, setBaseUrl] = useState<string>(MODEL_PRESETS[0].baseUrl);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [engineStatus, setEngineStatus] = useState<EngineStatus | null>(null);
+  const [statusChecked, setStatusChecked] = useState(false);
 
   const isCustom = presetId === "custom";
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setStatusChecked(false);
+    void fetchEngineStatus().then((status) => {
+      if (cancelled) return;
+      setEngineStatus(status);
+      setStatusChecked(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -96,9 +116,20 @@ export function ApiConfigPanel({
     onConnect(config);
   };
 
+  const handleServerKeyConnect = () => {
+    // Empty apiKey → dev server falls back to LLM_API_KEY / DEEPSEEK_API_KEY env.
+    onConnect({
+      apiKey: "",
+      model: engineStatus?.model ?? "",
+      useServerKey: true,
+    });
+  };
+
   if (!open) return null;
 
   const showDevHint = needsDevServerHint(error);
+  const serverKeyAvailable = engineStatus?.envKey === true;
+  const staticHosting = statusChecked && engineStatus === null;
 
   return (
     <div className="stagent-modal-backdrop">
@@ -120,6 +151,39 @@ export function ApiConfigPanel({
               ✕
             </button>
           )}
+        </div>
+
+        <button
+          type="button"
+          onClick={onDemoMode}
+          className="stagent-btn stagent-btn--ghost mb-4 w-full border border-hairline !py-2.5"
+        >
+          先用体验模式（无需密钥，脚本演示全流程）
+        </button>
+
+        {staticHosting && (
+          <p className="stagent-alert mb-3 text-xs leading-5 text-stone">
+            当前为静态托管环境（如 GitHub Pages），无法连接真实引擎。建议使用上方的体验模式。
+          </p>
+        )}
+
+        {serverKeyAvailable && (
+          <button
+            type="button"
+            disabled={isConnecting}
+            onClick={handleServerKeyConnect}
+            className="stagent-btn stagent-btn--primary mb-4 w-full !py-2.5"
+          >
+            {isConnecting
+              ? "连接中…"
+              : `使用云端已配置的密钥连接${engineStatus?.model ? `（${engineStatus.model}）` : ""}`}
+          </button>
+        )}
+
+        <div className="mb-3 flex items-center gap-2 text-[11px] text-stone">
+          <span className="h-px flex-1 bg-hairline" />
+          或手动填写密钥
+          <span className="h-px flex-1 bg-hairline" />
         </div>
 
         <div className="space-y-3">

@@ -16,6 +16,8 @@ export type ProjectStatus = "active" | "completed";
 
 export type MessageRole = "agent" | "user";
 
+export type EngineMode = "real" | "demo";
+
 export interface ChatMessage {
   id: string;
   role: MessageRole;
@@ -91,8 +93,9 @@ export interface AppState {
   buildPreviewUrl: string | null;
   buildError: string | null;
   useMockPreview: boolean;
-  acceptanceChecks: [boolean, boolean, boolean];
+  acceptanceChecks: boolean[];
   acceptanceCompleted: boolean;
+  awaitingChangeRequest: boolean;
   stagingProgress: number;
   stagingReady: boolean;
   stagingRunning: boolean;
@@ -110,6 +113,7 @@ export interface AppState {
   pendingGate: GateType;
   isAgentTyping: boolean;
   engineReady: boolean;
+  engineMode: EngineMode | null;
   engineConnecting: boolean;
   showApiConfig: boolean;
   engineError: string | null;
@@ -127,6 +131,7 @@ export type AppAction =
   | { type: "ADD_MESSAGE"; message: ChatMessage }
   | { type: "SET_AGENT_TYPING"; value: boolean }
   | { type: "SET_ENGINE_READY"; value: boolean }
+  | { type: "SET_ENGINE_MODE"; mode: EngineMode | null }
   | { type: "SET_ENGINE_CONNECTING"; value: boolean }
   | { type: "SET_SHOW_API_CONFIG"; value: boolean }
   | { type: "SET_ENGINE_ERROR"; error: string | null }
@@ -158,6 +163,7 @@ export type AppAction =
   | { type: "SET_USE_MOCK_PREVIEW"; value: boolean }
   | { type: "SET_BUILD_DONE" }
   | { type: "TOGGLE_ACCEPTANCE"; index: number }
+  | { type: "SET_AWAITING_CHANGE_REQUEST"; value: boolean }
   | { type: "REQUEST_CHANGES" }
   | { type: "COMPLETE_ACCEPTANCE" }
   | { type: "SET_STAGING_RUNNING"; value: boolean }

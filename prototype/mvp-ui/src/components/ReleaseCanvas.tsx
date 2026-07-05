@@ -6,7 +6,7 @@ interface ReleaseCanvasProps {
   stagingRunning: boolean;
   stagingPreviewUrl: string | null;
   stagingError: string | null;
-  goLiveChecks: [boolean, boolean, boolean];
+  goLiveChecks: boolean[];
   onToggleGoLiveCheck: (index: number) => void;
   projectCompleted: boolean;
   productionUrl: string | null;

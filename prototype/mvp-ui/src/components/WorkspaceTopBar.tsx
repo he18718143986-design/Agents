@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { DebugExportButton } from "./DebugExportButton";
 import { SnailMark } from "./SnailMark";
-import type { Stage } from "../types";
+import type { EngineMode, Stage } from "../types";
 
 interface WorkspaceTopBarProps {
   projectTitle: string;
   engineReady: boolean;
+  engineMode: EngineMode | null;
   stage: Stage;
   styleConfirmed: boolean;
   onGoHome: () => void;
@@ -18,6 +19,7 @@ interface WorkspaceTopBarProps {
 export function WorkspaceTopBar({
   projectTitle,
   engineReady,
+  engineMode,
   stage,
   styleConfirmed,
   onGoHome,
@@ -81,7 +83,11 @@ export function WorkspaceTopBar({
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-paper">{projectTitle}</p>
             <p className="truncate text-[11px] text-stone">
-              {engineReady ? "AI 已连接" : "AI 未连接"}
+              {engineMode === "demo"
+                ? "体验模式（脚本演示）"
+                : engineReady
+                  ? "AI 已连接"
+                  : "AI 未连接"}
             </p>
           </div>
         </div>

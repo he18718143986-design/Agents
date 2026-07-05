@@ -7,7 +7,7 @@ interface FailurePlaybookProps {
   buildError: string | null;
   buildRunning: boolean;
   buildDone: boolean;
-  acceptanceChecks: [boolean, boolean, boolean];
+  acceptanceChecks: boolean[];
   stagingError: string | null;
   productionError: string | null;
   stagingRunning: boolean;

@@ -28,9 +28,9 @@ interface LeftSidebarProps {
   stagingRunning: boolean;
   productionError: string | null;
   productionRunning: boolean;
-  acceptanceChecks: [boolean, boolean, boolean];
+  acceptanceChecks: boolean[];
   stagingReady: boolean;
-  goLiveChecks: [boolean, boolean, boolean];
+  goLiveChecks: boolean[];
   onConfirmPathSelfBuild: () => void;
   onConfirmPathBuy: () => void;
   onConfirmRequirements: () => void;

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { RequirementsData } from "../types";
+import { acceptanceItemsFor } from "../engine/acceptance";
 import { buildScenarioPreview } from "../engine/scenarioPreview";
 import { CanvasTabs } from "./CanvasTabs";
 
@@ -11,7 +12,7 @@ interface PreviewCanvasProps {
   buildPreviewUrl: string | null;
   buildError: string | null;
   useMockPreview: boolean;
-  acceptanceChecks: [boolean, boolean, boolean];
+  acceptanceChecks: boolean[];
   styleWarmth: number;
   onToggleAcceptance: (index: number) => void;
 }
@@ -178,13 +179,7 @@ export function PreviewCanvas({
     }
   }, [buildDone, activeTab]);
 
-  const acceptanceItems = requirements.acceptance.length
-    ? requirements.acceptance
-    : [
-        "核心功能是否可用",
-        "页面是否看得懂",
-        "你是否愿意把这个链接发给别人试用",
-      ];
+  const acceptanceItems = acceptanceItemsFor(requirements);
 
   const tabs = [
     {
@@ -265,18 +260,21 @@ export function PreviewCanvas({
       label: "验收清单",
       disabled: !buildDone,
       badge: buildDone
-        ? `${acceptanceChecks.filter(Boolean).length}/3`
+        ? `${acceptanceChecks.filter(Boolean).length}/${acceptanceItems.length}`
         : undefined,
       content: buildDone ? (
         <div className="space-y-3">
-          {acceptanceItems.slice(0, 3).map((item, index) => (
+          <p className="text-xs text-stone">
+            以下清单来自你确认过的需求文档中的验收标准。请在预览里实际操作后逐条勾选。
+          </p>
+          {acceptanceItems.map((item, index) => (
             <label
               key={item}
               className="flex cursor-pointer items-start gap-3 rounded-xl border border-hairline p-3 hover:bg-ink-softer"
             >
               <input
                 type="checkbox"
-                checked={acceptanceChecks[index]}
+                checked={acceptanceChecks[index] ?? false}
                 onChange={() => onToggleAcceptance(index)}
                 className="mt-1"
               />

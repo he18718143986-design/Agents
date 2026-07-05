@@ -6,7 +6,7 @@ import { HomePage } from "../components/HomePage";
 import { LeftSidebar } from "../components/LeftSidebar";
 import { ResizableWorkspace } from "../components/ResizableWorkspace";
 import { WorkspaceTopBar } from "../components/WorkspaceTopBar";
-import { getQuickReplies } from "../components/ChatPanel";
+import { getQuickReplies } from "../engine/quickReplies";
 import { loadStoredEngineConfig } from "../engine/apiConfig";
 import {
   createMockProject,
@@ -42,6 +42,7 @@ export function AppShell() {
     confirmStyle,
     completeAcceptance,
     confirmGoLive,
+    requestChanges,
     pauseProject,
     acknowledgeFeasibility,
     enterIterationMode,
@@ -56,6 +57,7 @@ export function AppShell() {
     hydrateFromSnapshot,
     resetDemo,
     connectEngine,
+    connectDemo,
     openApiConfig,
     closeApiConfig,
     dispatch,
@@ -181,7 +183,7 @@ export function AppShell() {
       onConfirmPathBuy={() => void confirmPathBuy()}
       onConfirmRequirements={() => void confirmRequirements()}
       onConfirmStyle={() => void confirmStyle()}
-      onRequestChanges={() => void sendUserMessage("还不行，请继续修改")}
+      onRequestChanges={() => void requestChanges()}
       onCompleteAcceptance={() => void completeAcceptance()}
       onConfirmGoLive={() => void confirmGoLive()}
       onPauseProject={() => void pauseProject()}
@@ -224,6 +226,7 @@ export function AppShell() {
         error={state.engineError}
         savedConfig={loadStoredEngineConfig()}
         onConnect={connectEngine}
+        onDemoMode={() => void connectDemo()}
         onClose={closeApiConfig}
         allowClose={state.engineReady}
       />
@@ -240,6 +243,7 @@ export function AppShell() {
           <WorkspaceTopBar
             projectTitle={projectTitle}
             engineReady={state.engineReady}
+            engineMode={state.engineMode}
             stage={state.stage}
             styleConfirmed={state.styleConfirmed}
             onGoHome={handleGoHome}

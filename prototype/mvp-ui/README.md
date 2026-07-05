@@ -1,20 +1,21 @@
-# Agent 工坊 MVP UI 原型
+# Stagent MVP UI 原型
 
-可交互的前端体验原型：**营销首页 `/` + 应用 `/app`（左侧聊天 + 右侧画布 + 阶段门确认）**。
+可交互的前端原型：**营销首页 `/` + 应用 `/app`（左侧聊天 + 右侧画布 + 阶段门确认）**。
 
-这是一个**纯前端 Demo**，使用模拟 Agent 回复，无需 API 密钥或后端服务。
+## 两种模式
 
-## 在线体验（推荐）
+- **体验模式（默认推荐）**：内置脚本驱动整个流程，无需 API 密钥和后端。制作阶段会根据你确认的需求生成一个**可真实操作**的演示应用（添加记录、删除、导出 CSV，数据保存在浏览器 localStorage）。
+- **真实引擎模式**：左侧聊天、制作、部署均由 OpenHands agent-server 驱动，需要本地 agent-server + LLM API Key。
 
-部署完成后，在浏览器打开：
+## 在线体验
 
 **https://he18718143986-design.github.io/Agents/**
 
-> 若页面 404，请到 GitHub 仓库 **Settings → Pages**，确认 Source 为 **GitHub Actions**。
+GitHub Pages 是静态托管，没有 agent-server，请在「连接 AI」弹窗点击**「先用体验模式」**。
 
-## 本地运行（在你自己的电脑上）
+## 本地运行
 
-### 仅 UI mock（无需 API Key）
+### 仅前端（体验模式）
 
 ```bash
 cd prototype/mvp-ui
@@ -22,59 +23,48 @@ npm install
 npm run dev
 ```
 
-### 连接真实 OpenHands 引擎（阶段 A）
-
-左侧聊天由 agent-server 驱动，右侧画布仍为 mock。启动后会在页面中弹出 **API 配置** 面板，填写 Key / 模型 / Base URL 即可（也可沿用上次会话保存的配置）。
+### 连接真实 OpenHands 引擎
 
 ```bash
-# 终端 1：仅 agent-server（API Key 可在页面里填）
+# 仓库根目录
+uv sync
+
+# 方式一：一键启动（agent-server + 前端）
+export DEEPSEEK_API_KEY=sk-...   # 可选：配置后页面可一键连接
+bash prototype/dev.sh
+
+# 方式二：分开启动
 export OPENHANDS_AGENT_SERVER_CONFIG_PATH="$(pwd)/prototype/agent-server.config.json"
 uv run agent-server --host 127.0.0.1 --port 8000
-
-# 终端 2：Vite 前端
+# 另一个终端
 cd prototype/mvp-ui && npm run dev
 ```
 
-或一条命令（环境变量里的 Key 可作为兜底，页面配置优先）：
+启动后打开 http://localhost:5173/app ：
 
-```bash
-bash prototype/dev.sh
-```
+- 若服务器已配置 `DEEPSEEK_API_KEY` / `LLM_API_KEY`，弹窗会出现「使用云端已配置的密钥连接」按钮；
+- 否则在弹窗中选择服务商并粘贴 API Key（密钥仅保存在当前标签页）。
 
-左侧栏 **API** 按钮可随时重新打开配置面板。
+### 远程 / 云端工作区如何打开 localhost？
 
-然后打开终端里显示的地址，通常是 **http://localhost:5173**。
-
-### 为什么在 Cursor 远程环境里打不开 localhost？
-
-如果你是在 **Cursor 云端 / 远程工作区** 里开发：
-
-- `localhost:5173` 指的是**云端机器**，不是你电脑的浏览器
-- 需要下面两种方式之一：
-
-**方式 A：Cursor 端口转发（推荐）**
-
-1. 在 Cursor 底部打开 **Ports（端口）** 面板
-2. 找到或添加端口 `5173`
-3. 点击 **Open in Browser（在浏览器中打开）**
-
-**方式 B：GitHub Pages 在线地址**
-
-使用上面的 **https://he18718143986-design.github.io/Agents/** ，无需配置端口。
+- **方式 A：端口转发（推荐）**：在 Cursor 底部 Ports 面板添加端口 `5173`，点击 Open in Browser。
+- **方式 B：GitHub Pages 在线地址**（仅体验模式）。
 
 ## 体验路径
 
-1. **做什么** — 回答 Agent 问题，右侧实时更新需求摘要，最后确认需求文档
-2. **长什么样** — 选择界面风格（A/B），可在聊天中说「按钮大一点」「颜色更暖」
-3. **做出来试试** — 观看制作进度，试用预览页面，勾选验收清单后完成
+1. **探索** — 描述想法，回答 Agent 追问，右侧同步需求草稿与方案对比，拍板路线
+2. **需求整理** — 补全目标用户 / 验收标准 / 时间预期，确认需求文档
+3. **选型与风格** — 选择技术路线（网页 / 小程序 / 桌面）与界面风格
+4. **制作与验收** — 观看制作进度，试用预览，**对照需求文档的验收标准逐条勾选**
+5. **测试与上线** — 测试环境试用 → 上线检查 → 正式发布
 
 ## 技术栈
 
-- React + TypeScript + Vite
-- Tailwind CSS v4
-- 内置 MVP 状态机（3 阶段、3 个门禁）
+- React + TypeScript + Vite + Tailwind CSS v4
+- 体验模式：`src/engine/demoCoach.ts`（脚本教练）+ `src/engine/demoBuilder.ts`（演示应用生成器）
+- 真实引擎：OpenHands agent-server（HTTP + WebSocket，见 `src/engine/openhandsClient.ts`）
 
 ## 说明
 
-- 本原型用于验证 UX，不代表真实 Agent 开发能力
-- 完整产品需将此前端与 OpenHands SDK 后端对接
+- 本原型用于验证 UX；体验模式不代表真实 Agent 能力
+- 真实引擎当前建造档位为 static-mvp（静态 Web MVP），数据库 / 登录 / 小程序真机在 roadmap

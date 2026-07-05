@@ -1,21 +1,5 @@
-import { useEffect, useState } from "react";
-import { downloadDebugLog, isDebugEnabled } from "../engine/debugLog";
-
-export function useDebugEnabled(): boolean {
-  const [debugOn, setDebugOn] = useState(() => isDebugEnabled());
-
-  useEffect(() => {
-    const sync = () => setDebugOn(isDebugEnabled());
-    window.addEventListener("stagent-debug-change", sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener("stagent-debug-change", sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
-
-  return debugOn;
-}
+import { downloadDebugLog } from "../engine/debugLog";
+import { useDebugEnabled } from "../engine/useDebugEnabled";
 
 interface DebugExportButtonProps {
   className?: string;
