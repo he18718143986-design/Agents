@@ -4,6 +4,7 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { createBootstrapMiddleware } from "./vite.bootstrap.ts";
+import { createPbProxy } from "./server/pbProxy.ts";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -15,6 +16,7 @@ function openhandsBootstrapPlugin(): Plugin {
     name: "openhands-bootstrap",
     configureServer(server) {
       server.middlewares.use(createBootstrapMiddleware(repoRoot));
+      server.middlewares.use(createPbProxy(repoRoot));
     },
   };
 }

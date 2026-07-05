@@ -1,11 +1,13 @@
-import { mkdirSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
+import path from "node:path";
 import { COACH_SYSTEM_PROMPT } from "../src/engine/canvasPrompt.ts";
 import { BUILD_SYSTEM_PROMPT } from "../src/engine/buildPrompt.ts";
 import {
   deploySystemPrompt,
   type DeployPhase,
 } from "../src/engine/deployPrompt.ts";
+import { DEMO_ACCOUNT, ensureInstance } from "./pocketbase.ts";
 
 /**
  * Framework-agnostic engine gateway shared by the Vite dev middleware
@@ -169,6 +171,23 @@ export async function handleCoachBootstrap(
   });
 }
 
+/** Seed the baas-static golden template into a fresh build workspace. */
+function seedTemplate(ctx: GatewayContext, workspaceDir: string, slug: string): void {
+  const templateDir = path.join(ctx.repoRoot, "prototype", "templates", "baas-static");
+  if (!existsSync(path.join(workspaceDir, "app.js"))) {
+    cpSync(templateDir, workspaceDir, { recursive: true });
+  }
+  // (Re)write platform config — never left to the build agent.
+  const configTemplate = readFileSync(path.join(templateDir, "config.js"), "utf8");
+  writeFileSync(
+    path.join(workspaceDir, "config.js"),
+    configTemplate
+      .replace("__PB_BASE__", `/pb/${slug}`)
+      .replace("__DEMO_EMAIL__", DEMO_ACCOUNT.email)
+      .replace("__DEMO_PASSWORD__", DEMO_ACCOUNT.password),
+  );
+}
+
 export async function handleBuildBootstrap(
   ctx: GatewayContext,
   body: BuildBootstrapBody,
@@ -183,9 +202,18 @@ export async function handleBuildBootstrap(
     return jsonResult(400, { error: "build_spec is required" });
   }
 
-  const slug = body.project_slug?.trim() || randomUUID().slice(0, 8);
+  const slug = (body.project_slug?.trim() || randomUUID().slice(0, 8)).toLowerCase();
   const workspaceDir = `${ctx.repoRoot}/prototype/workspaces/mvp-demo/builds/${slug}`;
   mkdirSync(workspaceDir, { recursive: true });
+
+  // baas-mvp: real persistence — seed template + start the app's PocketBase.
+  try {
+    seedTemplate(ctx, workspaceDir, slug);
+    await ensureInstance(ctx.repoRoot, slug);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    return jsonResult(500, { error: `数据底座启动失败：${detail}` });
+  }
 
   llmResult.llm.usage_id = "mvp-ui-build";
 

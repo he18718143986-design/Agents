@@ -18,6 +18,12 @@ Prototype that turns ideas into apps through a conversational, stage-gated workf
 - Build: `cd prototype/mvp-ui && npm run build` (`tsc -b && vite build`).
 - There is no automated test suite. `prototype/test_requirement_input.py` is a manual smoke script for the engine and needs an LLM API key.
 
+### baas-mvp data tier (PocketBase)
+
+- Real-engine builds now target the "golden template" in `prototype/templates/baas-static/` (login + cloud persistence via PocketBase; the build agent edits only `modules.js` / `custom.css`).
+- Each build slug gets its own PocketBase instance managed by `prototype/mvp-ui/server/pocketbase.ts` (binary auto-downloaded to `prototype/.pocketbase/bin/`, data in `prototype/workspaces/pocketbase/<slug>/`), reachable through the `/pb/<slug>/` proxy on both the Vite dev server and the production server.
+- Demo login for generated apps: `demo@stagent.online` / `demo1234567`.
+
 ### Non-obvious notes
 
 - `uv` is the Python package manager for the optional engine, but it is NOT part of the base image. It was installed to `~/.local/bin` and is sourced via `~/.bashrc`. If `uv` is missing on a fresh VM, reinstall with `curl -LsSf https://astral.sh/uv/install.sh | sh`, then `uv sync`.
