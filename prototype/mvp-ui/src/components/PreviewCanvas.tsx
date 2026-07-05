@@ -30,7 +30,7 @@ function WorkspacePreview({ url }: { url: string }) {
       <p className="text-xs text-stone">
         {isDemoArtifact
           ? "以下为体验模式生成的演示应用，可真实操作，数据保存在本机浏览器。"
-          : "以下为 agent-server workspace 中的真实 index.html（静态托管）。"}
+          : "以下为制作 Agent 交付的真实数据版应用：数据保存在应用云端数据库，登录页有演示账号。"}
       </p>
       <div className="overflow-hidden rounded-xl border border-hairline bg-ink-soft">
         <iframe
@@ -302,7 +302,7 @@ export function PreviewCanvas({
         <p className="shrink-0 rounded-lg border border-amber-500/30 bg-amber-950/20 px-3 py-2 text-xs text-amber-100/90">
           {buildPreviewUrl.startsWith("blob:")
             ? "当前为体验模式演示版，数据保存在本机浏览器，不会上传云端。"
-            : "当前为静态演示版，数据不会真实保存。"}
+            : "真实数据版：录入的数据保存在应用云端数据库，刷新和换设备都不会丢失。"}
         </p>
       )}
       <CanvasTabs

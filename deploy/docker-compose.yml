@@ -32,6 +32,9 @@ services:
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
+      # PocketBase 管理员（生产环境务必在 .env 中覆盖默认值）
+      PB_ADMIN_EMAIL: ${PB_ADMIN_EMAIL:-admin@stagent.local}
+      PB_ADMIN_PASSWORD: ${PB_ADMIN_PASSWORD:-stagent-admin-2026}
     volumes:
       - workspaces:/app/prototype/workspaces
     ports:

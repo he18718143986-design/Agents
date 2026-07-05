@@ -1,9 +1,9 @@
 import type { RequirementsData } from "../types.js";
 
-/** Current build tier. `baas-mvp` reserved for future Supabase/BaaS support. */
+/** Current build tier. */
 export type BuildProfile = "static-mvp" | "baas-mvp";
 
-/** Future: security checks when BuildProfile is `baas-mvp`. */
+/** Future: security checks expansion for multi-tenant tiers. */
 export type SecurityAcceptanceItem = {
   id: string;
   label: string;
@@ -13,32 +13,28 @@ export type SecurityAcceptanceItem = {
 /** Future: real hosting targets beyond workspace directory copy. */
 export type DeployTarget = "workspace-copy" | "external-hosting";
 
-export const BUILD_PROFILE: BuildProfile = "static-mvp";
+export const BUILD_PROFILE: BuildProfile = "baas-mvp";
 
 export const BUILD_CAPABILITY = {
   supports: [
-    "静态网页界面",
-    "mock 数据演示",
-    "workspace 预览",
-    "测试/正式目录发布",
+    "真实数据云端保存（增删改查、刷新/换设备不丢失）",
+    "登录 / 注册（多人使用同一应用）",
+    "台账表格、汇总统计、预警标红、CSV 导出",
+    "workspace 预览与测试/正式目录发布",
   ],
   notYet: [
-    "真实数据库",
-    "用户登录/权限",
-    "第三方 API 集成",
+    "第三方系统集成（微信/支付/短信等）",
+    "复杂流程引擎（多级审批、自动化任务）",
     "微信小程序真机",
   ],
 } as const;
 
 export const PRODUCT_POSITIONING =
-  "首版交付可试用、可分享的演示应用；需要真实数据库或登录的版本正在 roadmap。";
+  "首版交付可试用、可分享、数据真实保存的应用；第三方集成与小程序正在 roadmap。";
 
+/** Only third-party integration remains out of scope in the baas-mvp tier. */
 export function hasOutOfScopeNeeds(requirements: RequirementsData): boolean {
-  return (
-    requirements.needsPersistence ||
-    requirements.needsAuth ||
-    requirements.needsIntegration
-  );
+  return requirements.needsIntegration;
 }
 
 export function feasibilityGateClear(requirements: RequirementsData): boolean {
@@ -47,14 +43,10 @@ export function feasibilityGateClear(requirements: RequirementsData): boolean {
 
 export function outOfScopeNeedLabels(requirements: RequirementsData): string[] {
   const labels: string[] = [];
-  if (requirements.needsPersistence) labels.push("数据保存/历史记录");
-  if (requirements.needsAuth) labels.push("登录/多用户");
   if (requirements.needsIntegration) labels.push("第三方系统集成");
   return labels;
 }
 
 export function buildProfileNote(): string {
-  return (
-    `建造档位: ${BUILD_PROFILE}（静态 HTML + mock 数据，不含真实后端/鉴权/第三方集成）`
-  );
+  return "建造档位: baas-mvp（模板 + PocketBase 数据底座：真实保存、登录、多人使用；第三方集成暂以 mock 演示）";
 }

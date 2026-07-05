@@ -8,6 +8,7 @@ dist-ssr/
 .venv/
 prototype/workspaces/*/*
 !prototype/workspaces/*/.gitkeep
+prototype/.pocketbase/
 
 # Secrets
 deploy/.env

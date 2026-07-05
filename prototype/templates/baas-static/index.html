@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>加载中…</title>
+  <link rel="stylesheet" href="base.css" />
+  <link rel="stylesheet" href="custom.css" />
+</head>
+<body>
+  <div id="auth-screen" class="auth-screen hidden">
+    <div class="auth-card">
+      <h1 id="auth-title">登录</h1>
+      <p class="auth-sub" id="auth-app-name"></p>
+      <form id="auth-form">
+        <label>邮箱<input type="email" id="auth-email" required autocomplete="username" /></label>
+        <label>密码<input type="password" id="auth-password" required minlength="8" autocomplete="current-password" /></label>
+        <p class="auth-error hidden" id="auth-error"></p>
+        <button type="submit" class="btn-primary" id="auth-submit">登录</button>
+      </form>
+      <button type="button" class="auth-toggle" id="auth-toggle">没有账号？注册一个</button>
+      <p class="auth-demo" id="auth-demo-hint"></p>
+    </div>
+  </div>
+
+  <div id="app-screen" class="hidden">
+    <header class="app-header">
+      <div>
+        <h1 id="app-title"></h1>
+        <span class="app-badge">数据实时保存在云端 · 多人可用</span>
+      </div>
+      <div class="app-user">
+        <span id="current-user"></span>
+        <button type="button" id="logout-btn" class="btn-ghost">退出</button>
+      </div>
+    </header>
+    <nav class="tabs" id="module-tabs"></nav>
+    <main id="module-panels"></main>
+  </div>
+
+  <script src="lib/pocketbase.umd.js"></script>
+  <script src="config.js"></script>
+  <script src="modules.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
