@@ -99,7 +99,7 @@ docker compose up -d --build         # 更新代码后重新发布
 docker compose down                  # 停止（数据卷保留）
 ```
 
-用户项目产物在 Docker 卷 `stagent_workspaces` 中，建议配置定时备份：
+用户项目产物与**各应用的 PocketBase 数据库**（`workspaces/pocketbase/<slug>/`，含用户真实业务数据）都在 Docker 卷 `stagent_workspaces` 中，务必配置定时备份：
 
 ```bash
 docker run --rm -v stagent_workspaces:/data -v /backup:/backup alpine \

@@ -13,6 +13,8 @@ import {
   type GatewayContext,
   type GatewayResult,
 } from "./gateway.ts";
+import { createPbProxy } from "./pbProxy.ts";
+import { stopAll as stopAllPocketBase } from "./pocketbase.ts";
 
 /**
  * Production server: serves the built frontend, exposes the engine gateway
@@ -64,6 +66,9 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+// Per-app PocketBase instances (baas-mvp data tier), also before body parser.
+app.use(createPbProxy(repoRoot));
 
 app.use(express.json({ limit: "2mb" }));
 
@@ -130,6 +135,15 @@ server.on("upgrade", (req, socket, head) => {
     return;
   }
   socket.destroy();
+});
+
+process.on("SIGTERM", () => {
+  stopAllPocketBase();
+  process.exit(0);
+});
+process.on("SIGINT", () => {
+  stopAllPocketBase();
+  process.exit(0);
 });
 
 server.listen(port, () => {

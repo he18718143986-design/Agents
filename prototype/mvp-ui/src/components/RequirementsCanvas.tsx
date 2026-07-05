@@ -60,9 +60,9 @@ function CapabilityPanel({
       </Section>
       {outOfScope && !requirements.feasibilityAcknowledged && (
         <div className="rounded-xl border border-amber-500/40 bg-amber-950/20 p-4">
-          <p className="text-sm font-medium text-amber-200">需求超出本版建造能力</p>
+          <p className="text-sm font-medium text-amber-200">部分需求超出本版建造能力</p>
           <p className="mt-2 text-xs leading-6 text-amber-100/80">
-            你的需求包含：{needLabels.join("、")}。首版将以 mock 数据演示界面与流程，不会接入真实后端。
+            你的需求包含：{needLabels.join("、")}。这部分首版将以 mock 演示；数据保存、登录等其余功能为真实可用。
           </p>
           {onAcknowledgeFeasibility && (
             <button
@@ -77,7 +77,7 @@ function CapabilityPanel({
       )}
       {outOfScope && requirements.feasibilityAcknowledged && (
         <p className="rounded-lg border border-pine/30 bg-pine/10 px-3 py-2 text-xs text-pine-tint">
-          已确认：超范围功能将以 mock 演示交付。
+          已确认：第三方集成部分将以 mock 演示交付，其余功能真实可用。
         </p>
       )}
     </div>
