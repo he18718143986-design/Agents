@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { RequirementsData } from "../types";
 import { acceptanceItemsFor } from "../engine/acceptance";
 import { buildScenarioPreview } from "../engine/scenarioPreview";
+import { AppCheckPanel } from "./AppCheckPanel";
 import { CanvasTabs } from "./CanvasTabs";
 
 interface PreviewCanvasProps {
@@ -14,6 +15,8 @@ interface PreviewCanvasProps {
   useMockPreview: boolean;
   acceptanceChecks: boolean[];
   styleWarmth: number;
+  buildConversationId: string | null;
+  buildProjectSlug: string | null;
   onToggleAcceptance: (index: number) => void;
 }
 
@@ -172,6 +175,8 @@ export function PreviewCanvas({
   useMockPreview,
   acceptanceChecks,
   styleWarmth,
+  buildConversationId,
+  buildProjectSlug,
   onToggleAcceptance,
 }: PreviewCanvasProps) {
   const [activeTab, setActiveTab] = useState("progress");
@@ -267,6 +272,16 @@ export function PreviewCanvas({
         : undefined,
       content: buildDone ? (
         <div className="space-y-3">
+          {buildConversationId &&
+            buildProjectSlug &&
+            buildPreviewUrl &&
+            !buildPreviewUrl.startsWith("blob:") &&
+            !useMockPreview && (
+              <AppCheckPanel
+                conversationId={buildConversationId}
+                projectSlug={buildProjectSlug}
+              />
+            )}
           <p className="text-xs text-stone">
             以下清单来自你确认过的需求文档中的验收标准。请在预览里实际操作后逐条勾选。
           </p>
