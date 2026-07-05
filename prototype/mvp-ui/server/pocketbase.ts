@@ -133,6 +133,53 @@ async function adminToken(port: number): Promise<string> {
   return data.token;
 }
 
+/** 平台自身的数据实例（账号 + 项目云端存储）使用保留 slug。 */
+export const PLATFORM_SLUG = "platform";
+
+/** 平台实例：projects 集合（owner 级权限，快照 JSON 最大 2MB）。 */
+async function provisionPlatform(port: number): Promise<void> {
+  const token = await adminToken(port);
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+
+  const existing = await fetch(
+    `http://127.0.0.1:${port}/api/collections/projects`,
+    { headers },
+  );
+  if (existing.status === 404) {
+    const ownerRule = 'owner = @request.auth.id';
+    const created = await fetch(`http://127.0.0.1:${port}/api/collections`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        name: "projects",
+        type: "base",
+        fields: [
+          { name: "owner", type: "text", required: true },
+          { name: "title", type: "text" },
+          { name: "summary", type: "text" },
+          { name: "stage", type: "number" },
+          { name: "status", type: "text" },
+          { name: "completedAt", type: "number" },
+          { name: "snapshot", type: "json", maxSize: 2_000_000 },
+          { name: "created", type: "autodate", onCreate: true, onUpdate: false },
+          { name: "updated", type: "autodate", onCreate: true, onUpdate: true },
+        ],
+        listRule: ownerRule,
+        viewRule: ownerRule,
+        createRule: '@request.auth.id != "" && @request.body.owner = @request.auth.id',
+        updateRule: ownerRule,
+        deleteRule: ownerRule,
+      }),
+    });
+    if (!created.ok) {
+      throw new Error(`创建 projects 集合失败: ${await created.text()}`);
+    }
+  }
+}
+
 async function provision(port: number): Promise<void> {
   const token = await adminToken(port);
   const headers = {
@@ -233,7 +280,11 @@ async function startInstance(repoRoot: string, slug: string): Promise<PbInstance
 
   try {
     await waitForHealth(port, 12_000);
-    await provision(port);
+    if (slug === PLATFORM_SLUG) {
+      await provisionPlatform(port);
+    } else {
+      await provision(port);
+    }
   } catch (error) {
     child.kill();
     throw error;

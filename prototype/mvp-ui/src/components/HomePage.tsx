@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { DebugExportButton } from "./DebugExportButton";
+import { PlatformAuthModal } from "./PlatformAuthModal";
 import { SnailMark } from "./SnailMark";
 import { STAGE_LABELS, type MockProject } from "../mockProjects";
-import { listMockProjects } from "../engine/projectCatalog";
+import { currentUser, logout, onAuthChange } from "../engine/platformClient";
+import { listProjects } from "../engine/projectStore";
 
 function formatRelativeTime(timestamp: number): string {
   const deltaMs = Date.now() - timestamp;
@@ -30,8 +32,23 @@ export function HomePage({
   engineReady = false,
   onOpenApiConfig,
 }: HomePageProps) {
-  const [projects, setProjects] = useState(() => listMockProjects());
-  const refresh = () => setProjects(listMockProjects());
+  const [projects, setProjects] = useState<MockProject[]>([]);
+  const [user, setUser] = useState(() => currentUser());
+  const [authOpen, setAuthOpen] = useState(false);
+
+  const refresh = () => {
+    void listProjects()
+      .then(setProjects)
+      .catch(() => setProjects([]));
+  };
+
+  useEffect(() => {
+    refresh();
+    return onAuthChange(() => {
+      setUser(currentUser());
+      refresh();
+    });
+  }, []);
 
   const continueProject = useMemo(
     () => projects.find((p) => p.status === "active") ?? projects[0],
@@ -45,6 +62,11 @@ export function HomePage({
 
   return (
     <div className="stagent-shell min-h-screen">
+      <PlatformAuthModal
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onAuthed={refresh}
+      />
       <header className="stagent-nav">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
@@ -56,6 +78,28 @@ export function HomePage({
           </div>
           <div className="flex items-center gap-2">
             <DebugExportButton />
+            {user ? (
+              <div className="flex items-center gap-1.5">
+                <span className="hidden max-w-[160px] truncate text-xs text-stone sm:block">
+                  {user.email}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => logout()}
+                  className="stagent-btn stagent-btn--ghost stagent-btn--sm"
+                >
+                  退出
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAuthOpen(true)}
+                className="stagent-btn stagent-btn--ghost stagent-btn--sm"
+              >
+                登录 / 注册
+              </button>
+            )}
             <Link to="/#showcase" className="stagent-btn stagent-btn--ghost stagent-btn--sm">
               作品广场
             </Link>
@@ -159,7 +203,9 @@ export function HomePage({
               <span className="stagent-eyebrow">我的项目</span>
               <h2 className="stagent-title mt-2 text-base">全部项目</h2>
               <p className="mt-1 text-sm text-stone">
-                点击卡片进入工作台，左侧聊天、右侧画布会接着上次进度。
+                {user
+                  ? "项目保存在云端，换设备登录后可继续。"
+                  : "项目保存在本机浏览器；登录后可云端同步，换设备不丢失。"}
               </p>
             </div>
             <button
