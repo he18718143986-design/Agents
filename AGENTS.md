@@ -24,6 +24,11 @@ Prototype that turns ideas into apps through a conversational, stage-gated workf
 - Each build slug gets its own PocketBase instance managed by `prototype/mvp-ui/server/pocketbase.ts` (binary auto-downloaded to `prototype/.pocketbase/bin/`, data in `prototype/workspaces/pocketbase/<slug>/`), reachable through the `/pb/<slug>/` proxy on both the Vite dev server and the production server.
 - Demo login for generated apps: `demo@stagent.online` / `demo1234567`.
 
+### Automated app check (acceptance evidence)
+
+- `POST /prototype/api/run-app-check` with `{conversation_id, project_slug}` runs deterministic Playwright checks against a generated baas app (load/login/modules/CRUD/console) and writes screenshot evidence to the workspace `checks/` dir. UI entry: 验收清单 tab → 自动体检 panel.
+- Requires `playwright-core` (npm dep) + Chromium (`npx playwright install chromium`); returns 501 if missing.
+
 ### Non-obvious notes
 
 - `uv` is the Python package manager for the optional engine, but it is NOT part of the base image. It was installed to `~/.local/bin` and is sourced via `~/.bashrc`. If `uv` is missing on a fresh VM, reinstall with `curl -LsSf https://astral.sh/uv/install.sh | sh`, then `uv sync`.

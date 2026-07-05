@@ -40,7 +40,7 @@
 - 账号体系 + 项目云端存储（替代 localStorage）
 - 每制作任务独立沙箱（多租户隔离）
 - 用量限额 + 入门额度漏斗；BYO key 分叉（此时才引入）
-- 验收自动化：验收标准 → Midscene/Playwright 自动测试 + 证据报告
+- 验收自动化：验收标准 → Midscene/Playwright 自动测试 + 证据报告（**v1 已提前落地**：确定性体检 + 截图证据，见 R9；Midscene 语义级验收待 P3 引入多模态模型后升级）
 - 生成应用独立子域名托管（app-xxx.stagent.online，泛域名 + Coolify/Dokploy）
 
 ### P4 生态（生意 B 启动）

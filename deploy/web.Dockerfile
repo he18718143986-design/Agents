@@ -31,5 +31,9 @@ RUN npm run build
 COPY prototype/templates /app/prototype/templates
 RUN mkdir -p /app/prototype/workspaces/mvp-demo /app/prototype/workspaces/pocketbase
 
+# 自动体检用无头浏览器（约 300MB；如需精简镜像可删除本段，体检端点将返回 501）
+RUN npx playwright install chromium --with-deps 2>/dev/null || \
+    npx playwright install chromium
+
 EXPOSE 8080
 CMD ["npx", "tsx", "server/index.ts"]
