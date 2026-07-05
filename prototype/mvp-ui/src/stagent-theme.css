@@ -1,0 +1,260 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap");
+
+:root {
+  --ink: #14110d;
+  --ink-soft: #1e1810;
+  --ink-softer: #241d14;
+  --paper: #ede6d6;
+  --paper-dim: #c9c0ac;
+  --cinnabar: #c1432a;
+  --cinnabar-soft: #8b3220;
+  --cinnabar-tint: #e2735a;
+  --pine: #43604f;
+  --pine-tint: #7a9c87;
+  --stone: #948c7b;
+  --brass: #b6904f;
+  --hairline: #382f22;
+  --hairline-soft: #2a2317;
+  --display: "Noto Serif SC", "Songti SC", serif;
+  --body: "Noto Sans SC", "PingFang SC", sans-serif;
+  --mono: "IBM Plex Mono", monospace;
+  --radius-s: 8px;
+  --radius-m: 14px;
+  --radius-l: 20px;
+}
+
+.stagent-shell {
+  min-height: 100%;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+.stagent-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+.stagent-shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+.stagent-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(20, 17, 13, 0.86);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+.stagent-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cinnabar-tint);
+}
+
+.stagent-eyebrow::before {
+  content: "";
+  width: 12px;
+  height: 1.5px;
+  background: var(--cinnabar-tint);
+}
+
+.stagent-title {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 700;
+  color: var(--paper);
+}
+
+.stagent-card {
+  background: var(--ink-soft);
+  border: 1px solid var(--hairline-soft);
+  border-radius: var(--radius-l);
+}
+
+.stagent-card--accent {
+  border-color: rgba(193, 67, 42, 0.35);
+  background: linear-gradient(160deg, var(--ink-soft), var(--ink-softer));
+}
+
+.stagent-panel {
+  background: var(--ink-soft);
+  border: 1px solid var(--hairline-soft);
+  border-radius: var(--radius-l);
+}
+
+.stagent-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.stagent-btn--primary {
+  background: var(--cinnabar);
+  color: var(--paper);
+}
+
+.stagent-btn--primary:hover:not(:disabled) {
+  background: var(--cinnabar-tint);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -8px rgba(193, 67, 42, 0.55);
+}
+
+.stagent-btn--ghost {
+  background: transparent;
+  color: var(--paper);
+  border-color: var(--hairline);
+}
+
+.stagent-btn--ghost:hover:not(:disabled) {
+  border-color: var(--brass);
+  color: var(--brass);
+}
+
+.stagent-btn--sm {
+  padding: 7px 14px;
+  font-size: 0.82rem;
+}
+
+.stagent-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.stagent-input,
+.stagent-select {
+  width: 100%;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--hairline);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.stagent-input:focus,
+.stagent-select:focus {
+  border-color: var(--brass);
+  box-shadow: 0 0 0 2px rgba(182, 144, 79, 0.2);
+}
+
+.stagent-input::placeholder {
+  color: var(--stone);
+}
+
+.stagent-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  background: var(--ink-softer);
+  color: var(--stone);
+}
+
+.stagent-badge--accent {
+  color: var(--cinnabar-tint);
+  border: 1px solid rgba(193, 67, 42, 0.35);
+}
+
+.stagent-alert {
+  border-radius: var(--radius-m);
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.stagent-alert--error {
+  border: 1px solid rgba(193, 67, 42, 0.4);
+  background: rgba(193, 67, 42, 0.12);
+  color: var(--cinnabar-tint);
+}
+
+.stagent-alert--success {
+  border: 1px solid rgba(122, 156, 135, 0.4);
+  background: rgba(67, 96, 79, 0.2);
+  color: var(--pine-tint);
+}
+
+.stagent-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 17, 13, 0.82);
+  padding: 16px;
+}
+
+.stagent-modal {
+  width: 100%;
+  max-width: 28rem;
+  border-radius: var(--radius-l);
+  border: 1px solid var(--hairline);
+  background: var(--ink-soft);
+  padding: 20px;
+  box-shadow: 0 24px 48px -24px rgba(0, 0, 0, 0.65);
+}
+
+.stagent-chat-user {
+  background: var(--cinnabar);
+  color: var(--paper);
+}
+
+.stagent-chat-agent {
+  background: var(--ink-softer);
+  color: var(--paper);
+  border: 1px solid var(--hairline-soft);
+}
+
+.stagent-tab-active {
+  border: 1px solid var(--hairline);
+  border-bottom-color: transparent;
+  background: var(--ink-soft);
+  color: var(--cinnabar-tint);
+}
+
+.stagent-tab {
+  color: var(--paper-dim);
+}
+
+.stagent-tab:hover:not(:disabled) {
+  background: var(--ink-softer);
+  color: var(--paper);
+}

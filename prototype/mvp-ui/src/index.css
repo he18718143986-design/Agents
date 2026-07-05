@@ -1,0 +1,144 @@
+@import "./stagent-theme.css";
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui,
+    sans-serif;
+  --font-display: "Noto Serif SC", "Songti SC", serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  --color-ink: #14110d;
+  --color-ink-soft: #1e1810;
+  --color-ink-softer: #241d14;
+  --color-paper: #ede6d6;
+  --color-paper-dim: #c9c0ac;
+  --color-cinnabar: #c1432a;
+  --color-cinnabar-soft: #8b3220;
+  --color-cinnabar-tint: #e2735a;
+  --color-pine: #43604f;
+  --color-pine-tint: #7a9c87;
+  --color-stone: #948c7b;
+  --color-brass: #b6904f;
+  --color-hairline: #382f22;
+  --color-hairline-soft: #2a2317;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--body);
+  background: var(--ink);
+  color: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.35s ease-out both;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 1.6s ease-in-out infinite;
+}
+
+.chat-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hairline) transparent;
+}
+
+.app-snail-mark {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.app-snail-mark rect {
+  fill: #c1432a;
+}
+
+.app-snail-mark .snail-fill {
+  fill: #ede6d6;
+}
+
+.app-snail-mark .snail-spiral path {
+  fill: none;
+  stroke: #a83d28;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.app-snail-mark .snail-spiral path:nth-child(2) {
+  stroke-width: 2.1;
+}
+
+.app-snail-mark .snail-spiral path:nth-child(3) {
+  stroke-width: 1.8;
+}
+
+.app-snail-mark .snail-core {
+  fill: #c1432a;
+  stroke: none;
+}
+
+.app-snail-mark .snail-stalk {
+  fill: none;
+  stroke: #ede6d6;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.app-snail-mark .snail-eye {
+  fill: #ede6d6;
+  stroke: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 3px;
+  border-radius: 4px;
+}

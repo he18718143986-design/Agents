@@ -1,0 +1,11 @@
+# Build artifacts
+node_modules/
+dist/
+dist-ssr/
+
+# Prototype runtime data
+.agent_tmp/
+
+# OS / editor
+.DS_Store
+*.local
