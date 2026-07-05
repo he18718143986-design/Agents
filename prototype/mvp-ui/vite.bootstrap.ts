@@ -13,6 +13,19 @@ const AGENT_SERVER = "http://127.0.0.1:8000";
 const HEALTH_TIMEOUT_MS = 10_000;
 const CREATE_CONVERSATION_TIMEOUT_MS = 45_000;
 
+// agent-server >= 1.31 no longer pre-registers built-in tools; the request
+// must name the modules whose import side effects register each tool.
+const BUILD_TOOLS = [
+  { name: "TerminalTool" },
+  { name: "FileEditorTool" },
+  { name: "TaskTrackerTool" },
+];
+const BUILD_TOOL_MODULE_QUALNAMES = {
+  TerminalTool: "openhands.tools.terminal",
+  FileEditorTool: "openhands.tools.file_editor",
+  TaskTrackerTool: "openhands.tools.task_tracker",
+};
+
 interface BootstrapBody {
   api_key?: string;
   model?: string;
@@ -194,13 +207,10 @@ async function handleBuildBootstrap(
     agent: {
       kind: "Agent",
       llm: llmResult.llm,
-      tools: [
-        { name: "TerminalTool" },
-        { name: "FileEditorTool" },
-        { name: "TaskTrackerTool" },
-      ],
+      tools: BUILD_TOOLS,
       system_prompt: BUILD_SYSTEM_PROMPT,
     },
+    tool_module_qualnames: BUILD_TOOL_MODULE_QUALNAMES,
     workspace: { working_dir: workspaceDir },
     max_iterations: 80,
     initial_message: {
@@ -262,13 +272,10 @@ async function handleDeployBootstrap(
     agent: {
       kind: "Agent",
       llm: llmResult.llm,
-      tools: [
-        { name: "TerminalTool" },
-        { name: "FileEditorTool" },
-        { name: "TaskTrackerTool" },
-      ],
+      tools: BUILD_TOOLS,
       system_prompt: deploySystemPrompt(phase),
     },
+    tool_module_qualnames: BUILD_TOOL_MODULE_QUALNAMES,
     workspace: { working_dir: workspaceDir },
     max_iterations: 60,
     initial_message: {
