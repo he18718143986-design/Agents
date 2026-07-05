@@ -38,6 +38,8 @@ services:
       # 内测访问控制：两项都设置后全站启用 Basic Auth
       BASIC_AUTH_USER: ${BASIC_AUTH_USER:-}
       BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD:-}
+      # 用量限额：每账号每日真实引擎制作次数上限（0/不设 = 不限）
+      QUOTA_DAILY_BUILDS: ${QUOTA_DAILY_BUILDS:-}
     volumes:
       - workspaces:/app/prototype/workspaces
     ports:
