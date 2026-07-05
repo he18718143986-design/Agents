@@ -113,7 +113,7 @@ export function loadProjectSnapshot(
       ...snap,
       requirements: normalizeRequirements(snap.requirements),
       messages: snap.messages ?? [],
-      acceptanceChecks: snap.acceptanceChecks ?? [false, false, false],
+      acceptanceChecks: snap.acceptanceChecks ?? [],
       goLiveChecks: snap.goLiveChecks ?? [false, false, false],
       aiGateHints: snap.aiGateHints ?? { pathReady: false, requirementsReady: false },
     };

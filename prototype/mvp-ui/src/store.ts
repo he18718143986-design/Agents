@@ -1,4 +1,5 @@
 import type { AppAction, AppState, RequirementsData } from "./types";
+import { emptyAcceptanceChecks } from "./engine/acceptance";
 import { hasOutOfScopeNeeds } from "./engine/buildCapability";
 import { applyGateSync } from "./engine/gateReadiness";
 
@@ -41,8 +42,9 @@ export const initialState: AppState = {
   buildPreviewUrl: null,
   buildError: null,
   useMockPreview: false,
-  acceptanceChecks: [false, false, false],
+  acceptanceChecks: [],
   acceptanceCompleted: false,
+  awaitingChangeRequest: false,
   stagingProgress: 0,
   stagingReady: false,
   stagingRunning: false,
@@ -60,6 +62,7 @@ export const initialState: AppState = {
   pendingGate: null,
   isAgentTyping: false,
   engineReady: false,
+  engineMode: null,
   engineConnecting: false,
   showApiConfig: true,
   engineError: null,
@@ -93,6 +96,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, isAgentTyping: action.value };
     case "SET_ENGINE_READY":
       return { ...state, engineReady: action.value };
+    case "SET_ENGINE_MODE":
+      return { ...state, engineMode: action.mode };
     case "SET_ENGINE_CONNECTING":
       return { ...state, engineConnecting: action.value };
     case "SET_SHOW_API_CONFIG":
@@ -225,6 +230,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         buildDone: true,
         buildProgress: 100,
+        acceptanceChecks: emptyAcceptanceChecks(state.requirements),
         pendingGate: "acceptance",
       };
     case "TOGGLE_ACCEPTANCE":
@@ -232,8 +238,10 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         acceptanceChecks: state.acceptanceChecks.map((checked, index) =>
           index === action.index ? !checked : checked,
-        ) as AppState["acceptanceChecks"],
+        ),
       };
+    case "SET_AWAITING_CHANGE_REQUEST":
+      return { ...state, awaitingChangeRequest: action.value };
     case "REQUEST_CHANGES":
       return {
         ...state,
@@ -242,7 +250,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         buildPreviewUrl: null,
         buildError: null,
         useMockPreview: false,
-        acceptanceChecks: [false, false, false],
+        acceptanceChecks: emptyAcceptanceChecks(state.requirements),
         pendingGate: null,
       };
     case "COMPLETE_ACCEPTANCE":
@@ -318,7 +326,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         buildPreviewUrl: null,
         buildError: null,
         useMockPreview: false,
-        acceptanceChecks: [false, false, false],
+        acceptanceChecks: [],
         acceptanceCompleted: false,
         stagingReady: false,
         stagingPreviewUrl: null,
@@ -354,7 +362,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         buildPreviewUrl: null,
         buildError: null,
         useMockPreview: false,
-        acceptanceChecks: [false, false, false],
+        acceptanceChecks: [],
         acceptanceCompleted: false,
         pendingGate: null,
         aiGateHints: {
@@ -373,7 +381,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         buildPreviewUrl: null,
         buildError: null,
         useMockPreview: false,
-        acceptanceChecks: [false, false, false],
+        acceptanceChecks: [],
         acceptanceCompleted: false,
         pendingGate: "style",
       };
@@ -393,6 +401,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         ...action.snapshot,
         engineReady: state.engineReady,
+        engineMode: state.engineMode,
         engineConnecting: state.engineConnecting,
         showApiConfig: state.showApiConfig,
         engineError: state.engineError,

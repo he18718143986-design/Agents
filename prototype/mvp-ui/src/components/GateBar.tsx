@@ -11,9 +11,9 @@ interface GateBarProps {
   selectedTechId: TechChoice;
   selectedStyleId: "A" | "B" | null;
   buildDone: boolean;
-  acceptanceChecks: [boolean, boolean, boolean];
+  acceptanceChecks: boolean[];
   stagingReady: boolean;
-  goLiveChecks: [boolean, boolean, boolean];
+  goLiveChecks: boolean[];
   productionRunning?: boolean;
   projectCompleted: boolean;
   onConfirmPathSelfBuild: () => void;
@@ -129,7 +129,8 @@ export function GateBar({
   }
 
   if (stage === 3 && buildDone && pendingGate === "acceptance") {
-    const allChecked = acceptanceChecks.every(Boolean);
+    const allChecked =
+      acceptanceChecks.length > 0 && acceptanceChecks.every(Boolean);
     title = allChecked ? "验收通过，进入部署准备" : "请试用后勾选验收清单";
     primaryLabel = "验收通过，继续";
     primaryAction = onCompleteAcceptance;

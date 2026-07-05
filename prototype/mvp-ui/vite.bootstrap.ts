@@ -54,8 +54,12 @@ function resolveLlm(body: BootstrapBody) {
   if (!apiKey) {
     return { error: "api_key is required" as const };
   }
-  const model = body.model?.trim() || process.env.LLM_MODEL || "gpt-4o";
-  const baseUrl = body.base_url?.trim() || process.env.LLM_BASE_URL;
+  const model =
+    body.model?.trim() || process.env.LLM_MODEL || "deepseek/deepseek-chat";
+  const baseUrl =
+    body.base_url?.trim() ||
+    process.env.LLM_BASE_URL ||
+    (model.startsWith("deepseek/") ? "https://api.deepseek.com" : undefined);
   const llm: Record<string, string> = {
     model,
     api_key: apiKey,
@@ -275,8 +279,42 @@ async function handleDeployBootstrap(
   });
 }
 
+async function handleEngineStatus(res: ServerResponse): Promise<void> {
+  let agentServer = false;
+  try {
+    const health = await fetch(`${AGENT_SERVER}/health`, {
+      signal: AbortSignal.timeout(2500),
+    });
+    agentServer = health.ok;
+  } catch {
+    agentServer = false;
+  }
+  const envKey = Boolean(
+    process.env.LLM_API_KEY?.trim() || process.env.DEEPSEEK_API_KEY?.trim(),
+  );
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "application/json");
+  res.end(
+    JSON.stringify({
+      agentServer,
+      envKey,
+      model: process.env.LLM_MODEL?.trim() || null,
+    }),
+  );
+}
+
 export function createBootstrapMiddleware(repoRoot: string): Connect.NextHandleFunction {
   return async (req, res, next) => {
+    if (req.method === "GET" && req.url === "/prototype/api/engine-status") {
+      try {
+        await handleEngineStatus(res);
+      } catch {
+        res.statusCode = 500;
+        res.end(JSON.stringify({ agentServer: false, envKey: false, model: null }));
+      }
+      return;
+    }
+
     if (req.method !== "POST") {
       next();
       return;

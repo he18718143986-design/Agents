@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { ChatMessage } from "../types";
-import type { Stage } from "../types";
 
 interface ChatPanelProps {
   messages: ChatMessage[];
@@ -118,20 +117,4 @@ export function ChatPanel({
       </div>
     </div>
   );
-}
-
-export function getQuickReplies(stage: Stage): string[] {
-  if (stage === 0) {
-    return ["3～5 人小团队用", "数据从 Excel 导入", "希望一个月内能用"];
-  }
-  if (stage === 1) {
-    return ["验收：能导出月度报表", "不做移动端", "两周内看到第一版"];
-  }
-  if (stage === 2) {
-    return ["按钮再大一点", "颜色更温暖一点", "整体更简洁"];
-  }
-  if (stage === 3) {
-    return ["手机端打不开", "导出字段顺序改一下", "整体满意"];
-  }
-  return [];
 }
