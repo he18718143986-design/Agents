@@ -6,7 +6,8 @@ dist-ssr/
 # Prototype runtime data
 .agent_tmp/
 .venv/
-prototype/workspaces/*/builds/
+prototype/workspaces/*/*
+!prototype/workspaces/*/.gitkeep
 
 # Secrets
 deploy/.env

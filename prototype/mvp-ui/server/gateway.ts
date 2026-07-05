@@ -43,6 +43,20 @@ export interface DeployBootstrapBody extends BootstrapBody {
 const HEALTH_TIMEOUT_MS = 10_000;
 const CREATE_CONVERSATION_TIMEOUT_MS = 45_000;
 
+// agent-server >= 1.31 registers built-in tools under snake_case names
+// (TerminalTool.name === "terminal") and only registers them when the request
+// names the modules whose import side effects perform the registration.
+const BUILD_TOOLS = [
+  { name: "terminal" },
+  { name: "file_editor" },
+  { name: "task_tracker" },
+];
+const BUILD_TOOL_MODULE_QUALNAMES = {
+  terminal: "openhands.tools.terminal",
+  file_editor: "openhands.tools.file_editor",
+  task_tracker: "openhands.tools.task_tracker",
+};
+
 function jsonResult(status: number, body: unknown): GatewayResult {
   return { status, json: JSON.stringify(body) };
 }
@@ -179,13 +193,10 @@ export async function handleBuildBootstrap(
     agent: {
       kind: "Agent",
       llm: llmResult.llm,
-      tools: [
-        { name: "TerminalTool" },
-        { name: "FileEditorTool" },
-        { name: "TaskTrackerTool" },
-      ],
+      tools: BUILD_TOOLS,
       system_prompt: BUILD_SYSTEM_PROMPT,
     },
+    tool_module_qualnames: BUILD_TOOL_MODULE_QUALNAMES,
     workspace: { working_dir: workspaceDir },
     max_iterations: 80,
     initial_message: {
@@ -227,13 +238,10 @@ export async function handleDeployBootstrap(
     agent: {
       kind: "Agent",
       llm: llmResult.llm,
-      tools: [
-        { name: "TerminalTool" },
-        { name: "FileEditorTool" },
-        { name: "TaskTrackerTool" },
-      ],
+      tools: BUILD_TOOLS,
       system_prompt: deploySystemPrompt(phase),
     },
+    tool_module_qualnames: BUILD_TOOL_MODULE_QUALNAMES,
     workspace: { working_dir: workspaceDir },
     max_iterations: 60,
     initial_message: {
