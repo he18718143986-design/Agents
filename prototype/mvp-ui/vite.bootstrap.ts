@@ -13,17 +13,18 @@ const AGENT_SERVER = "http://127.0.0.1:8000";
 const HEALTH_TIMEOUT_MS = 10_000;
 const CREATE_CONVERSATION_TIMEOUT_MS = 45_000;
 
-// agent-server >= 1.31 no longer pre-registers built-in tools; the request
-// must name the modules whose import side effects register each tool.
+// agent-server >= 1.31 registers built-in tools under snake_case names
+// (TerminalTool.name === "terminal") and only registers them when the request
+// names the modules whose import side effects perform the registration.
 const BUILD_TOOLS = [
-  { name: "TerminalTool" },
-  { name: "FileEditorTool" },
-  { name: "TaskTrackerTool" },
+  { name: "terminal" },
+  { name: "file_editor" },
+  { name: "task_tracker" },
 ];
 const BUILD_TOOL_MODULE_QUALNAMES = {
-  TerminalTool: "openhands.tools.terminal",
-  FileEditorTool: "openhands.tools.file_editor",
-  TaskTrackerTool: "openhands.tools.task_tracker",
+  terminal: "openhands.tools.terminal",
+  file_editor: "openhands.tools.file_editor",
+  task_tracker: "openhands.tools.task_tracker",
 };
 
 interface BootstrapBody {
