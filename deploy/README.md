@@ -20,21 +20,37 @@ agent-server 容器（OpenHands，调用 DeepSeek API）
 - 安全组：放行 80、443（调试期可临时放行 8080）
 - 域名 stagent.online 已实名认证；**ICP 备案通过前，域名不能解析到该服务器对外服务**（调试用 `http://服务器IP:8080`）
 
+## 大陆网络环境要点（必读）
+
+境内 ECS 无法稳定访问 Docker Hub、GitHub、Google 等境外服务，本部署包已按以下策略适配：
+
+| 依赖 | 大陆可用性 | 本项目的处理 |
+| --- | --- | --- |
+| DeepSeek API | ✅ 境内服务，直连 | 默认引擎（不要换成 OpenAI/Claude 等境外 API，会不可达） |
+| Docker Hub 基础镜像 | ❌ 直连受限 | Dockerfile 支持 `--build-arg` 替换为镜像站（见下方命令） |
+| npm registry | ⚠️ 慢/不稳 | web.Dockerfile 默认使用 npmmirror（淘宝源） |
+| PyPI | ⚠️ 慢/不稳 | agent-server.Dockerfile 默认使用阿里云 PyPI 镜像 |
+| GitHub 克隆代码 | ⚠️ 慢/易断 | 建议在 Gitee 一键导入 GitHub 仓库作镜像，从 Gitee 克隆 |
+| get.docker.com | ⚠️ 慢 | 安装命令带 `--mirror Aliyun` |
+| Let's Encrypt (certbot) | ✅ 可用 | 正常使用 |
+| Google Fonts | ❌ 阻断 | 前端已移除外链字体，全部使用系统字体栈 |
+| GitHub Pages 演示页 | ⚠️ 大陆访问不稳定 | 部署完成后改用你自己的服务器地址做演示 |
+
 ## 部署步骤
 
-### 1. 安装 Docker（Ubuntu）
+### 1. 安装 Docker（Ubuntu，阿里云镜像）
 
 ```bash
-curl -fsSL https://get.docker.com | sh
+curl -fsSL https://get.docker.com | sh -s -- --mirror Aliyun
 sudo usermod -aG docker $USER && newgrp docker
 ```
-
-国内网络建议配置镜像加速（阿里云容器镜像服务 → 镜像加速器）。
 
 ### 2. 拉取代码并配置密钥
 
 ```bash
-git clone https://github.com/he18718143986-design/Agents.git stagent
+# 推荐：先在 gitee.com 用「从 GitHub 导入仓库」创建镜像，再从 Gitee 克隆
+git clone https://gitee.com/你的账号/Agents.git stagent
+# 或直连 GitHub（可能较慢）：git clone https://github.com/he18718143986-design/Agents.git stagent
 cd stagent/deploy
 cat > .env <<'EOF'
 DEEPSEEK_API_KEY=sk-你的真实密钥
@@ -50,7 +66,11 @@ chmod 600 .env
 ### 3. 构建并启动
 
 ```bash
-docker compose up -d --build
+# Docker Hub 直连通常受限，用镜像站的基础镜像构建：
+docker compose build \
+  --build-arg PY_BASE=docker.m.daocloud.io/library/python:3.12-slim \
+  --build-arg NODE_BASE=docker.m.daocloud.io/library/node:22-slim
+docker compose up -d
 docker compose ps          # 两个服务应为 running (healthy)
 curl http://127.0.0.1:8080/prototype/api/engine-status
 # 期望输出 {"agentServer":true,"envKey":true,...}

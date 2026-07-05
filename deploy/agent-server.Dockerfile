@@ -1,11 +1,17 @@
-FROM python:3.12-slim
+# 大陆服务器 Docker Hub 直连受限时，用镜像站替换基础镜像，例如：
+#   docker compose build --build-arg PY_BASE=docker.m.daocloud.io/library/python:3.12-slim
+ARG PY_BASE=python:3.12-slim
+FROM ${PY_BASE}
+
+# PyPI 用阿里云镜像，避免境外源超时
+ARG PIP_INDEX=https://mirrors.aliyun.com/pypi/simple/
+ENV UV_DEFAULT_INDEX=${PIP_INDEX}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates git bash \
     && rm -rf /var/lib/apt/lists/*
 
-# uv（国内服务器如网络不畅，可改用 pip install uv -i 阿里云 PyPI 镜像）
-RUN pip install --no-cache-dir uv
+RUN pip install --no-cache-dir -i ${PIP_INDEX} uv
 
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
