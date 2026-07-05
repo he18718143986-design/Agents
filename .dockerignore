@@ -1,0 +1,9 @@
+.git
+node_modules
+**/node_modules
+**/dist
+.venv
+**/__pycache__
+prototype/workspaces
+prototype/.agent_tmp
+prototype/mvp-ui/dist

@@ -5,6 +5,12 @@ dist-ssr/
 
 # Prototype runtime data
 .agent_tmp/
+.venv/
+prototype/workspaces/*/builds/
+
+# Secrets
+deploy/.env
+.env
 
 # OS / editor
 .DS_Store
