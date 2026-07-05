@@ -9,6 +9,7 @@
 | 文档 | 回答什么 |
 |------|----------|
 | [商业战略与单位经济](01-strategy/business-strategy.md) | 为谁、怎么赚钱、阶段排序 |
+| [品牌叙事与品牌语系统](01-strategy/brand.md) | 名字的含义、价值主张、品牌故事、slogan 系统 |
 | [产品路线图](01-strategy/roadmap.md) | 现在做什么、不做什么、何时做 |
 | [PRD：P1 内测版（范围冻结）](01-strategy/prd-p1.md) | 功能、验收标准、out of scope |
 | [决策记录 ADR](01-strategy/adr/) | 为什么选 A 不选 B |
