@@ -11,6 +11,7 @@ import {
   handleConversationUsage,
   handleDeployBootstrap,
   handleEngineStatus,
+  handleRunAppCheck,
   type GatewayContext,
   type GatewayResult,
 } from "./gateway.ts";
@@ -115,6 +116,15 @@ app.get("/prototype/api/engine-status", async (_req, res) => {
 app.get("/prototype/api/conversation-usage/:id", async (req, res) => {
   try {
     send(res, await handleConversationUsage(ctx, req.params.id));
+  } catch (error) {
+    gatewayErrorHandler(res, error);
+  }
+});
+
+const selfOrigin = process.env.SELF_ORIGIN ?? `http://127.0.0.1:${port}`;
+app.post("/prototype/api/run-app-check", async (req, res) => {
+  try {
+    send(res, await handleRunAppCheck(ctx, req.body ?? {}, selfOrigin));
   } catch (error) {
     gatewayErrorHandler(res, error);
   }

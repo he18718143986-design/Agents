@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { RequirementsData } from "../types";
 import { acceptanceItemsFor } from "../engine/acceptance";
 import { buildScenarioPreview } from "../engine/scenarioPreview";
+import { AppCheckPanel } from "./AppCheckPanel";
 import { CanvasTabs } from "./CanvasTabs";
 
 interface PreviewCanvasProps {
@@ -14,6 +15,8 @@ interface PreviewCanvasProps {
   useMockPreview: boolean;
   acceptanceChecks: boolean[];
   styleWarmth: number;
+  buildConversationId: string | null;
+  buildProjectSlug: string | null;
   onToggleAcceptance: (index: number) => void;
 }
 
@@ -172,9 +175,20 @@ export function PreviewCanvas({
   useMockPreview,
   acceptanceChecks,
   styleWarmth,
+  buildConversationId,
+  buildProjectSlug,
   onToggleAcceptance,
 }: PreviewCanvasProps) {
   const [activeTab, setActiveTab] = useState("progress");
+
+  // 会话 ID 优先从预览 URL 派生（快照恢复后 buildConversationId 不持久化）
+  const checkConversationId = useMemo(() => {
+    if (buildPreviewUrl && !buildPreviewUrl.startsWith("blob:")) {
+      const match = buildPreviewUrl.match(/\/api\/conversations\/([0-9a-f-]+)\//i);
+      if (match) return match[1];
+    }
+    return buildConversationId;
+  }, [buildPreviewUrl, buildConversationId]);
 
   useEffect(() => {
     if (buildDone && activeTab === "progress") {
@@ -267,6 +281,12 @@ export function PreviewCanvas({
         : undefined,
       content: buildDone ? (
         <div className="space-y-3">
+          {checkConversationId && buildProjectSlug && !useMockPreview && (
+            <AppCheckPanel
+              conversationId={checkConversationId}
+              projectSlug={buildProjectSlug}
+            />
+          )}
           <p className="text-xs text-stone">
             以下清单来自你确认过的需求文档中的验收标准。请在预览里实际操作后逐条勾选。
           </p>

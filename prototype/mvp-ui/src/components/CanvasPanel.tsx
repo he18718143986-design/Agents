@@ -100,6 +100,8 @@ export function CanvasPanel({
           useMockPreview={state.useMockPreview}
           acceptanceChecks={state.acceptanceChecks}
           styleWarmth={state.styleWarmth}
+          buildConversationId={state.buildConversationId}
+          buildProjectSlug={state.buildProjectSlug}
           onToggleAcceptance={onToggleAcceptance}
         />
       </div>

@@ -125,6 +125,64 @@ async function forwardConversationCreate(
   return { status: upstream.status, json: responseBody };
 }
 
+export interface AppCheckBody {
+  conversation_id?: string;
+  project_slug?: string;
+}
+
+/**
+ * 自动体检：对生成应用跑确定性检查并产出截图证据（详见 appCheck.ts）。
+ * selfOrigin = 本服务器可自访问的源（需同时具备 /api 与 /pb 代理）。
+ */
+export async function handleRunAppCheck(
+  ctx: GatewayContext,
+  body: AppCheckBody,
+  selfOrigin: string,
+): Promise<GatewayResult> {
+  const conversationId = body.conversation_id?.trim();
+  const slug = body.project_slug?.trim().toLowerCase();
+  if (!conversationId || !/^[0-9a-f-]{8,64}$/i.test(conversationId)) {
+    return jsonResult(400, { error: "conversation_id is required" });
+  }
+  if (!slug || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(slug)) {
+    return jsonResult(400, { error: "project_slug is required" });
+  }
+
+  const workspaceDir = path.join(
+    ctx.repoRoot, "prototype", "workspaces", "mvp-demo", "builds", slug,
+  );
+  if (!existsSync(path.join(workspaceDir, "index.html"))) {
+    return jsonResult(404, { error: "workspace 中未找到应用（请先完成制作）" });
+  }
+
+  let runAppCheck: typeof import("./appCheck.ts").runAppCheck;
+  try {
+    ({ runAppCheck } = await import("./appCheck.ts"));
+  } catch {
+    return jsonResult(501, {
+      error: "自动体检组件未安装（需 playwright-core 与 Chromium）",
+    });
+  }
+
+  const basicUser = process.env.BASIC_AUTH_USER?.trim();
+  const basicPassword = process.env.BASIC_AUTH_PASSWORD?.trim();
+
+  try {
+    const report = await runAppCheck({
+      appUrl: `${selfOrigin}/api/conversations/${conversationId}/workspace/index.html`,
+      workspaceDir,
+      basicAuth:
+        basicUser && basicPassword
+          ? { user: basicUser, password: basicPassword }
+          : undefined,
+    });
+    return jsonResult(200, report);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    return jsonResult(500, { error: `体检执行失败：${detail}` });
+  }
+}
+
 /**
  * Token usage for a conversation (c_create measurement). Reads the
  * conversation state's stats.usage_to_metrics and aggregates token counts.

@@ -7,6 +7,8 @@ import {
   handleConversationUsage,
   handleDeployBootstrap,
   handleEngineStatus,
+  handleRunAppCheck,
+  type AppCheckBody,
   type BootstrapBody,
   type BuildBootstrapBody,
   type DeployBootstrapBody,
@@ -76,6 +78,14 @@ export function createBootstrapMiddleware(repoRoot: string): Connect.NextHandleF
     }
 
     try {
+      if (req.url === "/prototype/api/run-app-check") {
+        const body = await readJsonBody<AppCheckBody>(req);
+        writeResult(
+          res,
+          await handleRunAppCheck(ctx, body, "http://127.0.0.1:5173"),
+        );
+        return;
+      }
       if (req.url === "/prototype/api/bootstrap-conversation") {
         const body = await readJsonBody<BootstrapBody>(req);
         writeResult(res, await handleCoachBootstrap(ctx, body));
