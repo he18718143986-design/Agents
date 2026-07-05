@@ -79,9 +79,11 @@ function mergeRequirementsPatch(
 ): RequirementsData {
   const next = { ...current, ...patch };
   const needsChanged =
-    patch.needsPersistence !== undefined ||
-    patch.needsAuth !== undefined ||
-    patch.needsIntegration !== undefined;
+    (patch.needsPersistence !== undefined &&
+      patch.needsPersistence !== current.needsPersistence) ||
+    (patch.needsAuth !== undefined && patch.needsAuth !== current.needsAuth) ||
+    (patch.needsIntegration !== undefined &&
+      patch.needsIntegration !== current.needsIntegration);
   if (needsChanged && hasOutOfScopeNeeds(next) && patch.feasibilityAcknowledged !== true) {
     next.feasibilityAcknowledged = false;
   }
