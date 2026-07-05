@@ -9,7 +9,7 @@ Prototype that turns ideas into apps through a conversational, stage-gated workf
 | Service | Required | Run command | Notes |
 | --- | --- | --- | --- |
 | `mvp-ui` (Vite frontend) | Yes | `cd prototype/mvp-ui && npm run dev` → http://localhost:5173/app | Runs fully standalone in "体验模式" (demo mode): no backend, no DB, no API key. In the "连接 AI" modal, click "先用体验模式" to enter demo mode. Use the Ports panel to open port `5173`. |
-| OpenHands `agent-server` | No (optional "真实引擎" mode) | `bash prototype/dev.sh` (starts agent-server + frontend), or standalone `uv run agent-server --host 127.0.0.1 --port 8000` with `OPENHANDS_AGENT_SERVER_CONFIG_PATH=$(pwd)/prototype/agent-server.config.json` | Requires an LLM API key (`DEEPSEEK_API_KEY` or `LLM_API_KEY`) — not present in this environment. Health check: `curl http://127.0.0.1:8000/health`. No database; uses local filesystem workspaces. |
+| OpenHands `agent-server` | No (optional "真实引擎" mode) | `bash prototype/dev.sh` (starts agent-server + frontend), or standalone `uv run agent-server --host 127.0.0.1 --port 8000` with `OPENHANDS_AGENT_SERVER_CONFIG_PATH=$(pwd)/prototype/agent-server.config.json` | Requires an LLM API key (`DEEPSEEK_API_KEY` or `LLM_API_KEY`). On Cursor Cloud a DeepSeek key is injected as the secret env var `stagent` — export it first: `export DEEPSEEK_API_KEY="$stagent" LLM_API_KEY="$stagent"`. Health check: `curl http://127.0.0.1:8000/health`. No database; uses local filesystem workspaces. |
 
 ### Lint / build / test
 
