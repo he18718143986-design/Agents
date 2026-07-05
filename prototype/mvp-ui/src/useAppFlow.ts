@@ -1022,7 +1022,15 @@ export function useAppFlow() {
 
   const acknowledgeFeasibility = useCallback(() => {
     dispatch({ type: "SET_FEASIBILITY_ACKNOWLEDGED" });
-  }, []);
+    if (isDemoMode()) {
+      // The demo coach's requirementsReady hint was suppressed while the
+      // feasibility notice was pending; re-apply it now that it is cleared.
+      dispatch({
+        type: "SET_AI_GATE_HINTS",
+        hints: { requirementsReady: true },
+      });
+    }
+  }, [isDemoMode]);
 
   const enterIterationMode = useCallback(async () => {
     logStateAction({ type: "ENTER_ITERATION_MODE" });

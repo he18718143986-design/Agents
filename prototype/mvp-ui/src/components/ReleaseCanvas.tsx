@@ -36,7 +36,7 @@ function DeployPreview({
           title={label}
           src={url}
           className="h-[min(480px,65vh)] w-full bg-paper"
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-scripts allow-same-origin allow-downloads allow-forms"
         />
       </div>
       <a

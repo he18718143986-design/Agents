@@ -24,17 +24,20 @@ const BUILD_STEPS = [
 ];
 
 function WorkspacePreview({ url }: { url: string }) {
+  const isDemoArtifact = url.startsWith("blob:");
   return (
     <div className="space-y-3">
       <p className="text-xs text-stone">
-        以下为 agent-server workspace 中的真实 index.html（静态托管）。
+        {isDemoArtifact
+          ? "以下为体验模式生成的演示应用，可真实操作，数据保存在本机浏览器。"
+          : "以下为 agent-server workspace 中的真实 index.html（静态托管）。"}
       </p>
       <div className="overflow-hidden rounded-xl border border-hairline bg-ink-soft">
         <iframe
           title="Workspace 预览"
           src={url}
           className="h-[min(520px,70vh)] w-full bg-paper"
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-scripts allow-same-origin allow-downloads allow-forms"
         />
       </div>
       <a
@@ -297,7 +300,9 @@ export function PreviewCanvas({
     <div className="flex h-full min-h-0 flex-col gap-3">
       {buildDone && buildPreviewUrl && !useMockPreview && (
         <p className="shrink-0 rounded-lg border border-amber-500/30 bg-amber-950/20 px-3 py-2 text-xs text-amber-100/90">
-          当前为静态演示版，数据不会真实保存。
+          {buildPreviewUrl.startsWith("blob:")
+            ? "当前为体验模式演示版，数据保存在本机浏览器，不会上传云端。"
+            : "当前为静态演示版，数据不会真实保存。"}
         </p>
       )}
       <CanvasTabs

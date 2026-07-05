@@ -23,13 +23,23 @@ export function demoWelcomeText(): string {
 }
 
 const SPLIT_PATTERN = /[、，,;；]|\s+和\s+|\n+/;
+const NOISE_PREFIX = /^(请|帮我|帮我们|我想|我们想|想要|需要|希望|开发|做一个|做个|做)/;
+const PLATFORM_STATEMENT = /^(在)?(电脑|手机|微信|浏览器|pc|移动端)(上|端|里)?(使用|用|打开|运行)?$/i;
+const CONTENT_PREFIX = /^(包含|包括|要有|需要有|支持|实现|提供)/;
 
 function extractFeatures(text: string): string[] {
   return text
     .replace(/[。.!！?？]+$/g, "")
     .split(SPLIT_PATTERN)
-    .map((part) => part.trim())
-    .filter((part) => part.length >= 2 && part.length <= 30)
+    .map((part) => part.trim().replace(CONTENT_PREFIX, ""))
+    .filter(
+      (part) =>
+        part.length >= 2 &&
+        part.length <= 30 &&
+        !NOISE_PREFIX.test(part) &&
+        !PLATFORM_STATEMENT.test(part) &&
+        !/(软件|系统|平台|工具|app)$/i.test(part),
+    )
     .slice(0, 8);
 }
 
