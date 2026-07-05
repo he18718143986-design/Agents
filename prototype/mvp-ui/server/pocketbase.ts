@@ -36,6 +36,23 @@ export interface PbInstance {
 
 const instances = new Map<string, PbInstance>();
 const pending = new Map<string, Promise<PbInstance>>();
+const lastAccess = new Map<string, number>();
+
+/** Reclaim instances idle beyond this window (data persists on disk; restart is on-demand). */
+const IDLE_TIMEOUT_MS = Number(process.env.PB_IDLE_TIMEOUT_MS ?? 30 * 60 * 1000);
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [slug, instance] of instances) {
+    const touched = lastAccess.get(slug) ?? 0;
+    if (now - touched > IDLE_TIMEOUT_MS) {
+      console.log(`[pocketbase:${slug}] idle ${Math.round((now - touched) / 60000)}min, stopping`);
+      instance.process.kill();
+      instances.delete(slug);
+      lastAccess.delete(slug);
+    }
+  }
+}, 60_000).unref();
 
 export function isValidSlug(slug: string): boolean {
   return SLUG_PATTERN.test(slug);
@@ -233,6 +250,7 @@ export function ensureInstance(repoRoot: string, slug: string): Promise<PbInstan
   if (!isValidSlug(slug)) {
     return Promise.reject(new Error(`invalid pocketbase slug: ${slug}`));
   }
+  lastAccess.set(slug, Date.now());
   const running = instances.get(slug);
   if (running) return Promise.resolve(running);
 

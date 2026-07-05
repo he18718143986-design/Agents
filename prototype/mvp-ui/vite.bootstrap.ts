@@ -4,6 +4,7 @@ import {
   agentServerErrorHint,
   handleBuildBootstrap,
   handleCoachBootstrap,
+  handleConversationUsage,
   handleDeployBootstrap,
   handleEngineStatus,
   type BootstrapBody,
@@ -48,6 +49,22 @@ export function createBootstrapMiddleware(repoRoot: string): Connect.NextHandleF
         writeResult(res, {
           status: 500,
           json: JSON.stringify({ agentServer: false, envKey: false, model: null }),
+        });
+      }
+      return;
+    }
+
+    const usageMatch = req.url?.match(
+      /^\/prototype\/api\/conversation-usage\/([0-9a-f-]+)$/i,
+    );
+    if (req.method === "GET" && usageMatch) {
+      try {
+        writeResult(res, await handleConversationUsage(ctx, usageMatch[1]));
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        writeResult(res, {
+          status: 502,
+          json: JSON.stringify({ error: agentServerErrorHint(detail) }),
         });
       }
       return;
