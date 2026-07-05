@@ -147,6 +147,8 @@
     pb.collection("app_data").getFullList({
       filter: "module = '" + module.id + "'",
       sort: "-created",
+      // 每个模块独立的取消键：并发加载多个模块时 SDK 不会误取消请求
+      requestKey: "list-" + module.id,
     }).then(function (items) {
       state.records[module.id] = items;
       renderTable(module);

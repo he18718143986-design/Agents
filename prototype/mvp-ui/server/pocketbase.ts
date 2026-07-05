@@ -127,6 +127,27 @@ async function provision(port: number): Promise<void> {
     `http://127.0.0.1:${port}/api/collections/app_data`,
     { headers },
   );
+  if (existing.ok) {
+    // Idempotent upgrade: older instances may lack the autodate fields.
+    const collection = (await existing.json()) as {
+      fields: { name: string; [key: string]: unknown }[];
+    };
+    const names = collection.fields.map((field) => field.name);
+    if (!names.includes("created") || !names.includes("updated")) {
+      const fields = [...collection.fields];
+      if (!names.includes("created")) {
+        fields.push({ name: "created", type: "autodate", onCreate: true, onUpdate: false });
+      }
+      if (!names.includes("updated")) {
+        fields.push({ name: "updated", type: "autodate", onCreate: true, onUpdate: true });
+      }
+      await fetch(`http://127.0.0.1:${port}/api/collections/app_data`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ fields }),
+      });
+    }
+  }
   if (existing.status === 404) {
     const authedRule = '@request.auth.id != ""';
     const created = await fetch(`http://127.0.0.1:${port}/api/collections`, {
@@ -139,6 +160,9 @@ async function provision(port: number): Promise<void> {
           { name: "module", type: "text", required: true },
           { name: "data", type: "json" },
           { name: "creator", type: "text" },
+          // v0.23+ 不再自动添加时间戳字段，模板按 -created 排序依赖它们
+          { name: "created", type: "autodate", onCreate: true, onUpdate: false },
+          { name: "updated", type: "autodate", onCreate: true, onUpdate: true },
         ],
         listRule: authedRule,
         viewRule: authedRule,
