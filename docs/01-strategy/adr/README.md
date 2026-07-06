@@ -12,3 +12,4 @@
 | [ADR-006](ADR-006-node-production-server.md) | 生产服务器用 Node（与 Vite 中间件共享网关） | 已采纳 |
 | [ADR-007](ADR-007-business-sequencing.md) | 商业排序：交付生意（A）先行，生态生意（B）后置 | 已采纳 |
 | [ADR-008](ADR-008-brand-naming.md) | 品牌命名、中文名与品牌哲学 | 部分采纳（名称待商标检索） |
+| [ADR-009](ADR-009-sandbox-isolation.md) | 制作/部署 Agent 的每任务容器隔离 | 已采纳（设计）；待 ECS 实施 |
