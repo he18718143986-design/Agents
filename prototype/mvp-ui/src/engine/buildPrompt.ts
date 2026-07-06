@@ -15,7 +15,10 @@ export const BUILD_SYSTEM_PROMPT = `你是 Stagent 的制作 Agent，在独立 w
 - 实现完成后在回复末尾单独一行写：[BUILD_DONE]
 - 不要输出 canvas-json 块
 
-若收到 [修改请求]，在现有 modules.js / custom.css 基础上增量修改，不要重建其他文件。`;
+若收到 [修改请求]：
+- **只做增量修改**：先读取现有 modules.js，在其基础上编辑，禁止重写未变更的文件
+- 修改范围通常只涉及个别模块的字段/汇总/预警或 custom.css 的几行，保持最小改动
+- 严禁反复读取大文件或循环尝试——两次编辑内完成，验证语法后即输出 [BUILD_DONE]`;
 
 const TECH_LABELS: Record<NonNullable<TechChoice>, string> = {
   web: "网页应用（浏览器打开）",

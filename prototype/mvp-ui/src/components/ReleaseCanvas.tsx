@@ -1,4 +1,5 @@
 import { CanvasTabs } from "./CanvasTabs";
+import { PublishShowcasePanel } from "./PublishShowcasePanel";
 
 interface ReleaseCanvasProps {
   stagingProgress: number;
@@ -77,6 +78,12 @@ export function ReleaseCanvas({
                 <div className="rounded-xl border border-pine-tint/40 bg-pine/20 px-4 py-3 text-sm text-pine-tint">
                   已上线正式环境
                 </div>
+                {productionUrl && (
+                  <PublishShowcasePanel
+                    title={requirementsGoal || "我的应用"}
+                    url={productionUrl}
+                  />
+                )}
                 {productionUrl ? (
                   <DeployPreview url={productionUrl} label="workspace 正式环境" />
                 ) : (

@@ -16,14 +16,16 @@ Prototype that turns ideas into apps through a conversational, stage-gated workf
 
 - Lint: `cd prototype/mvp-ui && npm run lint` (oxlint).
 - Build: `cd prototype/mvp-ui && npm run build` (`tsc -b && vite build`).
-- There is no automated test suite. `prototype/test_requirement_input.py` is a manual smoke script for the engine and needs an LLM API key.
+- Automated regression scripts live in `prototype/mvp-ui/tests/` (run with `npx tsx tests/<name>.ts`, e.g. `r14-gate-regression.ts`). `prototype/test_requirement_input.py` is a manual smoke script for the engine and needs an LLM API key.
 
 ### baas-mvp data tier (PocketBase)
 
 - Real-engine builds now target the "golden template" in `prototype/templates/baas-static/` (login + cloud persistence via PocketBase; the build agent edits only `modules.js` / `custom.css`).
 - Each build slug gets its own PocketBase instance managed by `prototype/mvp-ui/server/pocketbase.ts` (binary auto-downloaded to `prototype/.pocketbase/bin/`, data in `prototype/workspaces/pocketbase/<slug>/`), reachable through the `/pb/<slug>/` proxy on both the Vite dev server and the production server.
 - Demo login for generated apps: `demo@stagent.online` / `demo1234567`.
-- Platform accounts + cloud project storage use the reserved slug `platform` (`/pb/platform/`, `projects` collection with owner-scoped rules). Frontend: `src/engine/platformClient.ts` + `projectStore.ts` (cloud when logged in, localStorage fallback). Note: `vite.config.ts` patches the pocketbase SDK's `async import(` method name to avoid Vite import-analysis mangling.
+- Platform accounts + cloud project storage use the reserved slug `platform` (`/pb/platform/`, collections: `projects` owner-scoped, `usage_log` server-only, `showcase` public-read). Frontend: `src/engine/platformClient.ts` + `projectStore.ts` (cloud when logged in, localStorage fallback; local projects auto-migrate to cloud on login). Note: `vite.config.ts` patches the pocketbase SDK's `async import(` method name to avoid Vite import-analysis mangling.
+- Build quota: set `QUOTA_DAILY_BUILDS=<n>` to require a platform login for real-engine builds and cap daily builds per account (401 without token, 429 over limit).
+- Legal draft pages at `/terms` and `/privacy`; landing showcase section renders real published works from the `showcase` collection with static fallback.
 
 ### Automated app check (acceptance evidence)
 

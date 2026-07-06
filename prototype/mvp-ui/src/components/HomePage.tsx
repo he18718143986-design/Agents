@@ -5,7 +5,7 @@ import { PlatformAuthModal } from "./PlatformAuthModal";
 import { SnailMark } from "./SnailMark";
 import { STAGE_LABELS, type MockProject } from "../mockProjects";
 import { currentUser, logout, onAuthChange } from "../engine/platformClient";
-import { listProjects } from "../engine/projectStore";
+import { listProjects, migrateLocalProjects } from "../engine/projectStore";
 
 function formatRelativeTime(timestamp: number): string {
   const deltaMs = Date.now() - timestamp;
@@ -35,6 +35,7 @@ export function HomePage({
   const [projects, setProjects] = useState<MockProject[]>([]);
   const [user, setUser] = useState(() => currentUser());
   const [authOpen, setAuthOpen] = useState(false);
+  const [migratedCount, setMigratedCount] = useState(0);
 
   const refresh = () => {
     void listProjects()
@@ -45,8 +46,18 @@ export function HomePage({
   useEffect(() => {
     refresh();
     return onAuthChange(() => {
-      setUser(currentUser());
-      refresh();
+      const nextUser = currentUser();
+      setUser(nextUser);
+      if (nextUser) {
+        // 登录后把本地项目迁移到云端，再刷新列表
+        void migrateLocalProjects().then((count) => {
+          if (count > 0) setMigratedCount(count);
+          refresh();
+        });
+      } else {
+        setMigratedCount(0);
+        refresh();
+      }
     });
   }, []);
 
@@ -118,6 +129,11 @@ export function HomePage({
       </header>
 
       <main className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6">
+        {migratedCount > 0 && (
+          <p className="rounded-xl border border-pine/40 bg-pine/10 px-4 py-3 text-sm text-pine-tint">
+            已将 {migratedCount} 个本地项目迁移到云端，换设备登录也能继续了。
+          </p>
+        )}
         <section className="stagent-card stagent-card--accent p-6 sm:p-8">
           {continueProject ? (
             <>

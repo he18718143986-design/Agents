@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { SnailIcon, SnailMark } from "../components/SnailMark";
+import { listShowcase, type ShowcaseEntry } from "../engine/platformClient";
 import "./landing.css";
+
+const SHOWCASE_PALETTE = [
+  "linear-gradient(150deg,#2A3A2E,#1E2A22)",
+  "linear-gradient(150deg,#3A2A22,#241C16)",
+  "linear-gradient(150deg,#2A2F3A,#1C1F26)",
+  "linear-gradient(150deg,#3A2A30,#241620)",
+];
 
 const SHOWCASE_WORKS = [
   {
@@ -32,6 +40,12 @@ const SHOWCASE_WORKS = [
 
 export function LandingPage() {
   const [navOpen, setNavOpen] = useState(false);
+  const [realWorks, setRealWorks] = useState<ShowcaseEntry[]>([]);
+
+  useEffect(() => {
+    // 真实案例墙（静态托管/加载失败时保持内置示例）
+    void listShowcase(8).then(setRealWorks);
+  }, []);
   const [pathLeg, setPathLeg] = useState<0 | 1 | 2>(0);
   const [markerAt, setMarkerAt] = useState<"start" | "gate" | "end">("start");
   const [gateStamped, setGateStamped] = useState(false);
@@ -316,22 +330,47 @@ export function LandingPage() {
           </p>
         </div>
         <div className="showcase__grid">
-          {SHOWCASE_WORKS.map((work, index) => (
-            <div
-              key={work.name}
-              className={`work-card reveal${index > 0 ? ` reveal-d${index}` : ""}`}
-            >
-              <div className="work-card__thumb" style={{ background: work.bg }}>
-                {work.glyph}
-              </div>
-              <h4 className="work-card__name">{work.name}</h4>
-              <p className="work-card__desc">{work.desc}</p>
-              <span className="work-card__badge">
-                <SnailIcon />
-                Built with Stagent
-              </span>
-            </div>
-          ))}
+          {realWorks.length > 0
+            ? realWorks.slice(0, 4).map((work, index) => (
+                <a
+                  key={work.id}
+                  href={work.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`work-card reveal is-visible${index > 0 ? ` reveal-d${index}` : ""}`}
+                >
+                  <div
+                    className="work-card__thumb"
+                    style={{ background: SHOWCASE_PALETTE[index % SHOWCASE_PALETTE.length] }}
+                  >
+                    {work.title.slice(0, 1)}
+                  </div>
+                  <h4 className="work-card__name">{work.title}</h4>
+                  <p className="work-card__desc">
+                    {work.summary || `${work.author} 的作品，点击试用`}
+                  </p>
+                  <span className="work-card__badge">
+                    <SnailIcon />
+                    Built with Stagent
+                  </span>
+                </a>
+              ))
+            : SHOWCASE_WORKS.map((work, index) => (
+                <div
+                  key={work.name}
+                  className={`work-card reveal${index > 0 ? ` reveal-d${index}` : ""}`}
+                >
+                  <div className="work-card__thumb" style={{ background: work.bg }}>
+                    {work.glyph}
+                  </div>
+                  <h4 className="work-card__name">{work.name}</h4>
+                  <p className="work-card__desc">{work.desc}</p>
+                  <span className="work-card__badge">
+                    <SnailIcon />
+                    Built with Stagent
+                  </span>
+                </div>
+              ))}
         </div>
         <div className="showcase__more reveal">
           <Link to="/app" className="btn btn--ghost">
@@ -452,16 +491,21 @@ export function LandingPage() {
               </div>
               <div className="footer__col">
                 <div className="footer__col-title">资源</div>
-                <a href="https://github.com/TinaHe1995/Agent" target="_blank" rel="noreferrer">
+                <a href="https://github.com/he18718143986-design/Agents" target="_blank" rel="noreferrer">
                   开源仓库
                 </a>
                 <Link to="/app">进入应用</Link>
+              </div>
+              <div className="footer__col">
+                <div className="footer__col-title">法务</div>
+                <Link to="/terms">用户协议</Link>
+                <Link to="/privacy">隐私政策</Link>
               </div>
             </div>
           </div>
           <div className="footer__bottom">
             <span>© 2026 Stagent</span>
-            <span>stagent.ai</span>
+            <span>stagent.online</span>
           </div>
         </div>
       </footer>

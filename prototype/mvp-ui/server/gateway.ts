@@ -7,7 +7,7 @@ import {
   deploySystemPrompt,
   type DeployPhase,
 } from "../src/engine/deployPrompt.ts";
-import { DEMO_ACCOUNT, ensureInstance } from "./pocketbase.ts";
+import { DEMO_ACCOUNT, ensureInstance, platformApi } from "./pocketbase.ts";
 
 /**
  * Framework-agnostic engine gateway shared by the Vite dev middleware
@@ -34,6 +34,8 @@ export interface BootstrapBody {
 export interface BuildBootstrapBody extends BootstrapBody {
   build_spec?: string;
   project_slug?: string;
+  /** 启用用量限额时必填：平台账号的认证 token */
+  platform_token?: string;
 }
 
 export interface DeployBootstrapBody extends BootstrapBody {
@@ -278,6 +280,71 @@ export async function handleCoachBootstrap(
   });
 }
 
+/**
+ * 用量限额：环境变量 QUOTA_DAILY_BUILDS > 0 时启用。
+ * 制作引导必须携带平台账号 token；按 UTC 日历日统计 usage_log 中的 build 次数。
+ * 返回 null 表示放行（并已记账），否则返回错误结果。
+ */
+async function enforceBuildQuota(
+  ctx: GatewayContext,
+  platformToken: string | undefined,
+  slug: string,
+): Promise<GatewayResult | null> {
+  const limit = Number(process.env.QUOTA_DAILY_BUILDS ?? 0);
+  if (!limit || limit <= 0) return null;
+
+  if (!platformToken?.trim()) {
+    return jsonResult(401, {
+      error: "已启用用量限额：请先在工作台登录平台账号，再开始制作。",
+    });
+  }
+
+  const { port, adminHeaders } = await platformApi(ctx.repoRoot);
+
+  // 验证用户 token
+  const refresh = await fetch(
+    `http://127.0.0.1:${port}/api/collections/users/auth-refresh`,
+    { method: "POST", headers: { Authorization: platformToken } },
+  );
+  if (!refresh.ok) {
+    return jsonResult(401, {
+      error: "平台账号登录状态已失效，请重新登录后再开始制作。",
+    });
+  }
+  const auth = (await refresh.json()) as { record?: { id?: string } };
+  const ownerId = auth.record?.id;
+  if (!ownerId) {
+    return jsonResult(401, { error: "平台账号校验失败，请重新登录。" });
+  }
+
+  // 统计今日（UTC）已用次数
+  const dayStart = `${new Date().toISOString().slice(0, 10)} 00:00:00`;
+  const filter = encodeURIComponent(
+    `owner = '${ownerId}' && kind = 'build' && created >= '${dayStart}'`,
+  );
+  const usage = await fetch(
+    `http://127.0.0.1:${port}/api/collections/usage_log/records?filter=${filter}&perPage=1&skipTotal=0`,
+    { headers: adminHeaders },
+  );
+  if (usage.ok) {
+    const data = (await usage.json()) as { totalItems?: number };
+    if ((data.totalItems ?? 0) >= limit) {
+      return jsonResult(429, {
+        error: `今日制作次数已达上限（${limit} 次）。请明天再来，或联系平台提升额度。`,
+      });
+    }
+  }
+
+  // 记账（放行）
+  await fetch(`http://127.0.0.1:${port}/api/collections/usage_log/records`, {
+    method: "POST",
+    headers: adminHeaders,
+    body: JSON.stringify({ owner: ownerId, kind: "build", slug }),
+  }).catch(() => undefined);
+
+  return null;
+}
+
 /** Seed the baas-static golden template into a fresh build workspace. */
 function seedTemplate(ctx: GatewayContext, workspaceDir: string, slug: string): void {
   const templateDir = path.join(ctx.repoRoot, "prototype", "templates", "baas-static");
@@ -313,6 +380,15 @@ export async function handleBuildBootstrap(
   if (slug === "platform") {
     return jsonResult(400, { error: "project_slug 'platform' is reserved" });
   }
+
+  try {
+    const quotaError = await enforceBuildQuota(ctx, body.platform_token, slug);
+    if (quotaError) return quotaError;
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    return jsonResult(500, { error: `用量校验失败：${detail}` });
+  }
+
   const workspaceDir = `${ctx.repoRoot}/prototype/workspaces/mvp-demo/builds/${slug}`;
   mkdirSync(workspaceDir, { recursive: true });
 
