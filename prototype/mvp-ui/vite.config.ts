@@ -21,9 +21,31 @@ function openhandsBootstrapPlugin(): Plugin {
   };
 }
 
+// pocketbase SDK 的 CollectionService 有名为 `import` 的类方法（async import(...)），
+// Vite 的导入分析会把它误判为动态 import() 并注入 injectQuery，产生非法语法。
+// 改写为等价的字符串字面量方法名（async "import"(...) ）即可绕过误判。
+function patchPocketbaseImportMethod(): Plugin {
+  return {
+    name: "patch-pocketbase-import-method",
+    enforce: "pre",
+    transform(code, id) {
+      if (!id.includes("node_modules/pocketbase/")) return null;
+      if (!code.includes("async import(")) return null;
+      return { code: code.replaceAll("async import(", 'async "import"('), map: null };
+    },
+  };
+}
+
 export default defineConfig({
   base,
-  plugins: [react(), tailwindcss(), openhandsBootstrapPlugin()],
+  // 排除预优化，让上面的 transform 插件能处理原始模块
+  optimizeDeps: { exclude: ["pocketbase"] },
+  plugins: [
+    patchPocketbaseImportMethod(),
+    react(),
+    tailwindcss(),
+    openhandsBootstrapPlugin(),
+  ],
   server: {
     host: true,
     port: 5173,

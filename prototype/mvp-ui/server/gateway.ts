@@ -310,6 +310,9 @@ export async function handleBuildBootstrap(
   }
 
   const slug = (body.project_slug?.trim() || randomUUID().slice(0, 8)).toLowerCase();
+  if (slug === "platform") {
+    return jsonResult(400, { error: "project_slug 'platform' is reserved" });
+  }
   const workspaceDir = `${ctx.repoRoot}/prototype/workspaces/mvp-demo/builds/${slug}`;
   mkdirSync(workspaceDir, { recursive: true });
 

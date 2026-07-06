@@ -9,14 +9,11 @@ import { WorkspaceTopBar } from "../components/WorkspaceTopBar";
 import { getQuickReplies } from "../engine/quickReplies";
 import { loadStoredEngineConfig } from "../engine/apiConfig";
 import {
-  createMockProject,
-  getMockProject,
-  syncProjectFromWorkspace,
-} from "../engine/projectCatalog";
-import {
-  loadProjectSnapshot,
-  saveProjectSnapshot,
-} from "../engine/projectPersistence";
+  createProject,
+  getProject,
+  loadSnapshot,
+  saveSnapshot,
+} from "../engine/projectStore";
 import type { MockProject } from "../mockProjects";
 import { useAppFlow } from "../useAppFlow";
 
@@ -26,6 +23,7 @@ export function AppShell() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState<AppView>("home");
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [activeProject, setActiveProject] = useState<MockProject | undefined>();
   const [openInIterationMode, setOpenInIterationMode] = useState(false);
   const handledNewActionRef = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
@@ -63,7 +61,6 @@ export function AppShell() {
     dispatch,
   } = useAppFlow();
 
-  const activeProject = activeProjectId ? getMockProject(activeProjectId) : undefined;
   const projectTitle =
     state.requirements.goal || activeProject?.title || "新项目";
 
@@ -72,10 +69,11 @@ export function AppShell() {
       setActiveProjectId(projectId);
       setOpenInIterationMode(options?.iteration ?? false);
       setView("workspace");
+      void getProject(projectId).then(setActiveProject);
 
       await resetDemo();
 
-      const snapshot = loadProjectSnapshot(projectId);
+      const snapshot = await loadSnapshot(projectId);
       if (snapshot) {
         hydrateFromSnapshot(snapshot);
       }
@@ -88,8 +86,7 @@ export function AppShell() {
   );
 
   const handleNewProject = useCallback(() => {
-    const project = createMockProject();
-    void enterWorkspace(project.id);
+    void createProject().then((project) => enterWorkspace(project.id));
   }, [enterWorkspace]);
 
   const handleOpenProject = useCallback(
@@ -101,7 +98,7 @@ export function AppShell() {
 
   const handleGoHome = useCallback(() => {
     if (activeProjectId) {
-      saveProjectSnapshot(activeProjectId, state);
+      void saveSnapshot(activeProjectId, state);
     }
     setView("home");
     setOpenInIterationMode(false);
@@ -110,10 +107,12 @@ export function AppShell() {
   useEffect(() => {
     if (searchParams.get("action") !== "new" || handledNewActionRef.current) return;
     handledNewActionRef.current = true;
-    const project = createMockProject();
-    setActiveProjectId(project.id);
-    setView("workspace");
-    void resetDemo();
+    void createProject().then((project) => {
+      setActiveProjectId(project.id);
+      setActiveProject(project);
+      setView("workspace");
+      void resetDemo();
+    });
     setSearchParams({}, { replace: true });
   }, [searchParams, setSearchParams, resetDemo]);
 
@@ -123,19 +122,10 @@ export function AppShell() {
     if (saveTimerRef.current) {
       window.clearTimeout(saveTimerRef.current);
     }
+    // 云端保存有网络往返，去抖间隔比本地稍长
     saveTimerRef.current = window.setTimeout(() => {
-      saveProjectSnapshot(activeProjectId, state);
-    }, 500);
-
-    syncProjectFromWorkspace(activeProjectId, {
-      title: state.requirements.goal || undefined,
-      summary:
-        state.discoveryBrief.split("\n").filter(Boolean).slice(-1)[0] || undefined,
-      stage: state.stage,
-      status: state.projectStatus,
-      completedAt:
-        state.projectStatus === "completed" ? Date.now() : undefined,
-    });
+      void saveSnapshot(activeProjectId, state);
+    }, 1200);
 
     return () => {
       if (saveTimerRef.current) {

@@ -23,6 +23,7 @@ Prototype that turns ideas into apps through a conversational, stage-gated workf
 - Real-engine builds now target the "golden template" in `prototype/templates/baas-static/` (login + cloud persistence via PocketBase; the build agent edits only `modules.js` / `custom.css`).
 - Each build slug gets its own PocketBase instance managed by `prototype/mvp-ui/server/pocketbase.ts` (binary auto-downloaded to `prototype/.pocketbase/bin/`, data in `prototype/workspaces/pocketbase/<slug>/`), reachable through the `/pb/<slug>/` proxy on both the Vite dev server and the production server.
 - Demo login for generated apps: `demo@stagent.online` / `demo1234567`.
+- Platform accounts + cloud project storage use the reserved slug `platform` (`/pb/platform/`, `projects` collection with owner-scoped rules). Frontend: `src/engine/platformClient.ts` + `projectStore.ts` (cloud when logged in, localStorage fallback). Note: `vite.config.ts` patches the pocketbase SDK's `async import(` method name to avoid Vite import-analysis mangling.
 
 ### Automated app check (acceptance evidence)
 
