@@ -1,0 +1,150 @@
+/* 内测邀请页 —— 复用 landing 主题变量，仅补充本页布局 */
+.beta__wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.beta__hero {
+  padding: 72px 0 40px;
+  text-align: center;
+}
+.beta__title {
+  font-size: clamp(28px, 5vw, 44px);
+  line-height: 1.2;
+}
+.beta__title em {
+  color: var(--cinnabar-tint);
+  font-style: normal;
+}
+.beta__lead {
+  margin: 20px auto 0;
+  max-width: 620px;
+  color: var(--paper-dim);
+  font-size: 17px;
+  line-height: 1.7;
+}
+.beta__ctas {
+  margin-top: 32px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.beta__section {
+  padding: 32px 0;
+  border-top: 1px solid var(--hairline);
+}
+.beta__h2 {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+.beta__note {
+  color: var(--stone);
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+.beta__grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.beta__card {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-m);
+  background: var(--ink-soft);
+  padding: 18px;
+}
+.beta__card h3 {
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+.beta__card p {
+  color: var(--paper-dim);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.beta__can {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 640px) {
+  .beta__can {
+    grid-template-columns: 1fr;
+  }
+}
+.beta__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.beta__list li {
+  padding: 6px 0 6px 24px;
+  position: relative;
+  color: var(--paper-dim);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.beta__list li::before {
+  position: absolute;
+  left: 0;
+  top: 6px;
+}
+.beta__list--yes li::before {
+  content: "✓";
+  color: var(--pine-tint);
+}
+.beta__list--no li::before {
+  content: "×";
+  color: var(--stone);
+}
+.beta__steps {
+  counter-reset: step;
+  display: grid;
+  gap: 14px;
+}
+.beta__step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.beta__step-num {
+  counter-increment: step;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--cinnabar);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+.beta__step-num::before {
+  content: counter(step);
+}
+.beta__step-body h3 {
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+.beta__step-body p {
+  color: var(--paper-dim);
+  font-size: 14px;
+}
+.beta__contact {
+  text-align: center;
+  padding: 40px 0 72px;
+}
+.beta__foot {
+  border-top: 1px solid var(--hairline);
+  padding: 24px 0 48px;
+  text-align: center;
+  color: var(--stone);
+  font-size: 13px;
+}
+.beta__foot a {
+  color: var(--cinnabar-tint);
+  text-decoration: none;
+}
