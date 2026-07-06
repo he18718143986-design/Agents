@@ -16,7 +16,7 @@ Prototype that turns ideas into apps through a conversational, stage-gated workf
 
 - Lint: `cd prototype/mvp-ui && npm run lint` (oxlint).
 - Build: `cd prototype/mvp-ui && npm run build` (`tsc -b && vite build`).
-- There is no automated test suite. `prototype/test_requirement_input.py` is a manual smoke script for the engine and needs an LLM API key.
+- Automated regression scripts live in `prototype/mvp-ui/tests/` (run with `npx tsx tests/<name>.ts`, e.g. `r14-gate-regression.ts`). `prototype/test_requirement_input.py` is a manual smoke script for the engine and needs an LLM API key.
 
 ### baas-mvp data tier (PocketBase)
 
