@@ -29,6 +29,20 @@ export function fieldsReadyForRequirements(requirements: RequirementsData): bool
   );
 }
 
+/**
+ * 需求字段已客观齐全，但 coach 尚未发出 requirementsReady 信号。
+ * 此时提供人工兜底：让用户自行确认推进，避免因 LLM 时序问题卡死（实验 002 A2）。
+ */
+export function requirementsReadyButAiSilent(state: AppState): boolean {
+  return (
+    state.stage === 1 &&
+    !state.requirementsComplete &&
+    !state.requirementsConfirmed &&
+    fieldsReadyForRequirements(state.requirements) &&
+    !state.aiGateHints.requirementsReady
+  );
+}
+
 export function mergeGateHints(
   current: AppState["aiGateHints"],
   incoming: GateHints,

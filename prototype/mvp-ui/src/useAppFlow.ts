@@ -1021,6 +1021,11 @@ export function useAppFlow() {
     );
   }, [pushAgentMessage]);
 
+  const markRequirementsComplete = useCallback(() => {
+    logStateAction({ type: "SET_REQUIREMENTS_COMPLETE" });
+    dispatch({ type: "SET_REQUIREMENTS_COMPLETE" });
+  }, []);
+
   const acknowledgeFeasibility = useCallback(() => {
     dispatch({ type: "SET_FEASIBILITY_ACKNOWLEDGED" });
     if (isDemoMode()) {
@@ -1217,6 +1222,7 @@ export function useAppFlow() {
     requestChanges,
     pauseProject,
     acknowledgeFeasibility,
+    markRequirementsComplete,
     enterIterationMode,
     revertToExplore,
     revertToRequirements,

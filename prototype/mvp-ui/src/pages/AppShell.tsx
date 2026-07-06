@@ -8,6 +8,7 @@ import { ResizableWorkspace } from "../components/ResizableWorkspace";
 import { WorkspaceTopBar } from "../components/WorkspaceTopBar";
 import { getQuickReplies } from "../engine/quickReplies";
 import { loadStoredEngineConfig } from "../engine/apiConfig";
+import { requirementsReadyButAiSilent } from "../engine/gateReadiness";
 import {
   createProject,
   getProject,
@@ -43,6 +44,7 @@ export function AppShell() {
     requestChanges,
     pauseProject,
     acknowledgeFeasibility,
+    markRequirementsComplete,
     enterIterationMode,
     revertToExplore,
     revertToRequirements,
@@ -157,6 +159,8 @@ export function AppShell() {
       pathChoice={state.pathChoice}
       discoveryReady={state.discoveryReady}
       requirementsComplete={state.requirementsComplete}
+      requirementsReadyButAiSilent={requirementsReadyButAiSilent(state)}
+      onManualRequirementsComplete={markRequirementsComplete}
       selectedTechId={state.selectedTechId}
       selectedStyleId={state.selectedStyleId}
       buildDone={state.buildDone}
