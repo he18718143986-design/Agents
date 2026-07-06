@@ -99,6 +99,19 @@ export function PlatformAuthModal({ open, onClose, onAuthed }: PlatformAuthModal
           {busy ? "请稍候…" : registerMode ? "注册并登录" : "登录"}
         </button>
 
+        {registerMode && (
+          <p className="mt-2 text-center text-[11px] leading-5 text-stone">
+            注册即表示同意
+            <a href="/terms" target="_blank" rel="noreferrer" className="text-cinnabar-tint hover:underline">
+              《用户协议》
+            </a>
+            与
+            <a href="/privacy" target="_blank" rel="noreferrer" className="text-cinnabar-tint hover:underline">
+              《隐私政策》
+            </a>
+          </p>
+        )}
+
         <button
           type="button"
           onClick={() => {

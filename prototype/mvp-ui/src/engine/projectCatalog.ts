@@ -45,6 +45,10 @@ export function createMockProject(title = "新项目"): MockProject {
   return project;
 }
 
+export function removeMockProject(id: string): void {
+  writeAll(readAll().filter((project) => project.id !== id));
+}
+
 export function upsertMockProject(
   id: string,
   patch: Partial<

@@ -136,48 +136,106 @@ async function adminToken(port: number): Promise<string> {
 /** 平台自身的数据实例（账号 + 项目云端存储）使用保留 slug。 */
 export const PLATFORM_SLUG = "platform";
 
-/** 平台实例：projects 集合（owner 级权限，快照 JSON 最大 2MB）。 */
+async function ensureCollection(
+  port: number,
+  headers: Record<string, string>,
+  schema: Record<string, unknown> & { name: string },
+): Promise<void> {
+  const existing = await fetch(
+    `http://127.0.0.1:${port}/api/collections/${schema.name}`,
+    { headers },
+  );
+  if (existing.status !== 404) return;
+  const created = await fetch(`http://127.0.0.1:${port}/api/collections`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(schema),
+  });
+  if (!created.ok) {
+    throw new Error(`创建 ${schema.name} 集合失败: ${await created.text()}`);
+  }
+}
+
+/** 平台实例：projects / usage_log / showcase 三个集合（幂等开通）。 */
 async function provisionPlatform(port: number): Promise<void> {
   const token = await adminToken(port);
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
   };
+  const ownerRule = 'owner = @request.auth.id';
+  const timestamps = [
+    { name: "created", type: "autodate", onCreate: true, onUpdate: false },
+    { name: "updated", type: "autodate", onCreate: true, onUpdate: true },
+  ];
 
-  const existing = await fetch(
-    `http://127.0.0.1:${port}/api/collections/projects`,
-    { headers },
-  );
-  if (existing.status === 404) {
-    const ownerRule = 'owner = @request.auth.id';
-    const created = await fetch(`http://127.0.0.1:${port}/api/collections`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        name: "projects",
-        type: "base",
-        fields: [
-          { name: "owner", type: "text", required: true },
-          { name: "title", type: "text" },
-          { name: "summary", type: "text" },
-          { name: "stage", type: "number" },
-          { name: "status", type: "text" },
-          { name: "completedAt", type: "number" },
-          { name: "snapshot", type: "json", maxSize: 2_000_000 },
-          { name: "created", type: "autodate", onCreate: true, onUpdate: false },
-          { name: "updated", type: "autodate", onCreate: true, onUpdate: true },
-        ],
-        listRule: ownerRule,
-        viewRule: ownerRule,
-        createRule: '@request.auth.id != "" && @request.body.owner = @request.auth.id',
-        updateRule: ownerRule,
-        deleteRule: ownerRule,
-      }),
-    });
-    if (!created.ok) {
-      throw new Error(`创建 projects 集合失败: ${await created.text()}`);
-    }
-  }
+  await ensureCollection(port, headers, {
+    name: "projects",
+    type: "base",
+    fields: [
+      { name: "owner", type: "text", required: true },
+      { name: "title", type: "text" },
+      { name: "summary", type: "text" },
+      { name: "stage", type: "number" },
+      { name: "status", type: "text" },
+      { name: "completedAt", type: "number" },
+      { name: "snapshot", type: "json", maxSize: 2_000_000 },
+      ...timestamps,
+    ],
+    listRule: ownerRule,
+    viewRule: ownerRule,
+    createRule: '@request.auth.id != "" && @request.body.owner = @request.auth.id',
+    updateRule: ownerRule,
+    deleteRule: ownerRule,
+  });
+
+  // 用量记录：仅服务端（superuser）可读写，规则全部锁定
+  await ensureCollection(port, headers, {
+    name: "usage_log",
+    type: "base",
+    fields: [
+      { name: "owner", type: "text", required: true },
+      { name: "kind", type: "text", required: true },
+      { name: "slug", type: "text" },
+      ...timestamps,
+    ],
+  });
+
+  // 案例墙：公开可读，登录用户可发布自己的作品
+  await ensureCollection(port, headers, {
+    name: "showcase",
+    type: "base",
+    fields: [
+      { name: "owner", type: "text", required: true },
+      { name: "title", type: "text", required: true },
+      { name: "summary", type: "text" },
+      { name: "url", type: "text", required: true },
+      { name: "author", type: "text" },
+      { name: "tags", type: "json" },
+      ...timestamps,
+    ],
+    listRule: "",
+    viewRule: "",
+    createRule: '@request.auth.id != "" && @request.body.owner = @request.auth.id',
+    updateRule: ownerRule,
+    deleteRule: ownerRule,
+  });
+}
+
+/** 服务端直连平台实例（用量限额、后台操作用）。 */
+export async function platformApi(repoRoot: string): Promise<{
+  port: number;
+  adminHeaders: Record<string, string>;
+}> {
+  const instance = await ensureInstance(repoRoot, PLATFORM_SLUG);
+  const token = await adminToken(instance.port);
+  return {
+    port: instance.port,
+    adminHeaders: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  };
 }
 
 async function provision(port: number): Promise<void> {

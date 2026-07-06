@@ -19,6 +19,7 @@ import {
   demoWelcomeText,
 } from "./engine/demoCoach";
 import { createDemoAppUrl, type DemoEnv } from "./engine/demoBuilder";
+import { platformToken } from "./engine/platformClient";
 import { buildStageContext } from "./engine/stageContext";
 import {
   BuildClient,
@@ -402,7 +403,7 @@ export function useAppFlow() {
         const spec = formatBuildSpecMessage(stateRef.current, changeRequest);
         const slug = stateRef.current.buildProjectSlug ?? `${Date.now().toString(36)}`;
         trackBuildSend(spec, slug, false);
-        const client = await BuildClient.bootstrap(config, spec, slug);
+        const client = await BuildClient.bootstrap(config, spec, slug, platformToken());
         buildClientRef.current = client;
         dispatch({ type: "SET_BUILD_CONVERSATION", id: client.conversationId });
         dispatch({ type: "SET_BUILD_PROJECT_SLUG", slug });

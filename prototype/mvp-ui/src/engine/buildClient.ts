@@ -58,6 +58,7 @@ export class BuildClient {
     config: EngineBootstrapConfig,
     buildSpec: string,
     projectSlug: string,
+    platformToken?: string,
   ): Promise<BuildClient> {
     const res = await fetch(`${API_BASE}/prototype/api/bootstrap-build-conversation`, {
       method: "POST",
@@ -68,6 +69,7 @@ export class BuildClient {
         base_url: config.baseUrl ?? "",
         build_spec: buildSpec,
         project_slug: projectSlug,
+        platform_token: platformToken ?? "",
       }),
     });
     if (!res.ok) {
