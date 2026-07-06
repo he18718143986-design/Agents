@@ -23,6 +23,12 @@
 | [验收标准与测试场景](02-product/acceptance-test-scenarios.md) | 什么叫「做完」 |
 | [指标定义](02-product/metrics.md) | 北极星怎么算 |
 
+### 03 工程
+
+| 文档 | 回答什么 |
+|------|----------|
+| [沙箱隔离预研](03-engineering/sandbox-isolation.md) | 制作 Agent 的多租户安全：威胁模型、每任务容器隔离设计、ECS 验证方案 |
+
 ### 工程文档（现存）
 
 - [AGENTS.md](../AGENTS.md) — 开发环境与服务运行说明

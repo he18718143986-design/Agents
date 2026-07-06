@@ -38,7 +38,7 @@
 ### P3 平台化
 
 - 账号体系 + 项目云端存储（替代 localStorage）（**v1 已提前落地**：平台 PocketBase 实例 + 属主隔离的 projects 集合，登录后云端同步、未登录本地回退，见 R10）
-- 每制作任务独立沙箱（多租户隔离）
+- 每制作任务独立沙箱（多租户隔离）（**设计已定** ADR-009 / [预研文档](../03-engineering/sandbox-isolation.md)：Node 编排 per-task 硬化容器；**开放公众注册前必须实施**，待 ECS 验证）
 - 用量限额 + 入门额度漏斗；BYO key 分叉（此时才引入）（**限额 v1 已落地**：`QUOTA_DAILY_BUILDS` 每账号每日制作上限，见 R11）
 - 验收自动化：验收标准 → Midscene/Playwright 自动测试 + 证据报告（**v1 已提前落地**：确定性体检 + 截图证据，见 R9；Midscene 语义级验收待 P3 引入多模态模型后升级）
 - 生成应用独立子域名托管（app-xxx.stagent.online，泛域名 + Coolify/Dokploy）
