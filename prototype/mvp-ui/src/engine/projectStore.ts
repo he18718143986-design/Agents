@@ -4,9 +4,11 @@ import {
   createMockProject,
   getMockProject,
   listMockProjects,
+  removeMockProject,
   syncProjectFromWorkspace,
 } from "./projectCatalog";
 import {
+  deleteProjectSnapshot,
   extractPersistableSnapshot,
   loadProjectSnapshot,
   saveProjectSnapshot,
@@ -107,6 +109,42 @@ export async function loadSnapshot(
   } catch {
     return null;
   }
+}
+
+/**
+ * 登录后一次性迁移：把本地（localStorage）有实质进度的项目上传到云端，
+ * 成功后删除本地副本。返回迁移数量。
+ */
+export async function migrateLocalProjects(): Promise<number> {
+  const user = currentUser();
+  if (!user) return 0;
+
+  let migrated = 0;
+  for (const project of listMockProjects()) {
+    const snapshot = loadProjectSnapshot(project.id);
+    // 只迁移有对话进度的项目（跳过种子示例和空项目）
+    if (!snapshot || (snapshot.messages?.length ?? 0) === 0) continue;
+    try {
+      await platformPb.collection("projects").create({
+        owner: user.id,
+        title: project.title,
+        summary: project.summary,
+        stage: project.stage,
+        status: project.status,
+        ...(project.completedAt ? { completedAt: project.completedAt } : {}),
+        snapshot,
+      });
+      deleteProjectSnapshot(project.id);
+      removeMockProject(project.id);
+      migrated += 1;
+    } catch (error) {
+      logPersistence("cloud.migrate.failed", { id: project.id, error: String(error) });
+    }
+  }
+  if (migrated > 0) {
+    logPersistence("cloud.migrate.done", { migrated });
+  }
+  return migrated;
 }
 
 /** 保存快照 + 同步项目卡片元数据（云端一次请求完成）。 */

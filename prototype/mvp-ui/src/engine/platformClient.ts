@@ -49,6 +49,67 @@ export function logout(): void {
   platformPb.authStore.clear();
 }
 
+/** 当前平台认证 token（未登录返回空串），供网关用量校验携带。 */
+export function platformToken(): string {
+  return platformPb.authStore.isValid ? platformPb.authStore.token : "";
+}
+
+export interface ShowcaseEntry {
+  id: string;
+  title: string;
+  summary: string;
+  url: string;
+  author: string;
+  tags: string[];
+}
+
+interface ShowcaseRecord {
+  id: string;
+  title?: string;
+  summary?: string;
+  url?: string;
+  author?: string;
+  tags?: string[] | null;
+}
+
+/** 公开案例墙列表（匿名可读；失败时返回空数组由调用方回退静态内容）。 */
+export async function listShowcase(limit = 8): Promise<ShowcaseEntry[]> {
+  try {
+    const result = await platformPb
+      .collection("showcase")
+      .getList<ShowcaseRecord>(1, limit, { sort: "-created" });
+    return result.items.map((item) => ({
+      id: item.id,
+      title: item.title || "未命名作品",
+      summary: item.summary || "",
+      url: item.url || "#",
+      author: item.author || "匿名创作者",
+      tags: Array.isArray(item.tags) ? item.tags : [],
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/** 发布作品到案例墙（需登录）。 */
+export async function publishShowcase(entry: {
+  title: string;
+  summary?: string;
+  url: string;
+  tags?: string[];
+}): Promise<void> {
+  const user = currentUser();
+  if (!user) throw new Error("请先登录平台账号");
+  await platformPb.collection("showcase").create({
+    owner: user.id,
+    title: entry.title.slice(0, 60),
+    summary: entry.summary?.slice(0, 120) ?? "",
+    url: entry.url,
+    author: user.name || user.email.split("@")[0],
+    tags: entry.tags ?? [],
+  });
+}
+
 export function friendlyAuthError(error: unknown): string {
   const anyError = error as { response?: { message?: string; data?: Record<string, { message?: string }> }; message?: string };
   const fieldError = anyError.response?.data
