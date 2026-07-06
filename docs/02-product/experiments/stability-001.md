@@ -50,4 +50,5 @@
 
 - **P1 内测放行判定：有条件通过**——首次生成 100%、成本与耗时优秀；修改成功率按执行口径达标；门禁 P0 已修复。
 - 条件：① 对 B1 场景补跑 1 次「需求确认 → 制作 → 修改」验证门禁修复与 token 行为；② **本实验跑在 static-mvp 档位，baas-mvp（现行 main）需按同协议补测**（追加 R6 持久化断言）——建议作为稳定性实验 002。
+- 实验 002 每次生成后用 `npx tsx tests/app-assertions.ts <conversationId> <slug>` 自动验收 R6+R9（免人工操作，规避 001 的操作失误）。
 - 单位经济结论已回填 [business-strategy.md](../../01-strategy/business-strategy.md) 与 [metrics.md](../metrics.md)。
