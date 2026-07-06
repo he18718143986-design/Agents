@@ -234,6 +234,84 @@ export async function handleConversationUsage(
   });
 }
 
+/** 单次生成全流程平均成本（元），来自稳定性实验 001 实测。 */
+const COST_PER_BUILD_CNY = 0.14;
+
+/**
+ * 运营后台数据聚合（超级管理员）。需 ADMIN_TOKEN 环境变量启用，
+ * 请求头 x-admin-token 校验通过后，用平台 superuser 读取全部记录汇总。
+ */
+export async function handleAdminOverview(
+  ctx: GatewayContext,
+  adminToken: string | undefined,
+): Promise<GatewayResult> {
+  const expected = process.env.ADMIN_TOKEN?.trim();
+  if (!expected) {
+    return jsonResult(403, { error: "运营后台未启用（未设置 ADMIN_TOKEN）" });
+  }
+  if (!adminToken || adminToken !== expected) {
+    return jsonResult(401, { error: "管理令牌无效" });
+  }
+
+  const { port, adminHeaders } = await platformApi(ctx.repoRoot);
+  const base = `http://127.0.0.1:${port}/api/collections`;
+
+  const getList = async (
+    collection: string,
+    query: string,
+  ): Promise<{ totalItems: number; items: Record<string, unknown>[] }> => {
+    const res = await fetch(`${base}/${collection}/records?${query}`, {
+      headers: adminHeaders,
+    });
+    if (!res.ok) return { totalItems: 0, items: [] };
+    return (await res.json()) as { totalItems: number; items: Record<string, unknown>[] };
+  };
+
+  const dayStart = `${new Date().toISOString().slice(0, 10)} 00:00:00`;
+
+  const [users, projects, showcase, buildsToday] = await Promise.all([
+    getList("users", "perPage=8&sort=-created"),
+    getList("projects", "perPage=10&sort=-updated"),
+    getList("showcase", "perPage=1&skipTotal=0"),
+    getList(
+      "usage_log",
+      `perPage=1&skipTotal=0&filter=${encodeURIComponent(`kind = 'build' && created >= '${dayStart}'`)}`,
+    ),
+  ]);
+
+  const byStatus: Record<string, number> = {};
+  for (const p of projects.items) {
+    const status = String(p.status ?? "active");
+    byStatus[status] = (byStatus[status] ?? 0) + 1;
+  }
+
+  return jsonResult(200, {
+    generatedAt: new Date().toISOString(),
+    users: {
+      total: users.totalItems,
+      recent: users.items.map((u) => ({
+        email: u.email ?? "",
+        created: u.created ?? "",
+      })),
+    },
+    projects: {
+      total: projects.totalItems,
+      recentStatusBreakdown: byStatus,
+      recent: projects.items.map((p) => ({
+        title: p.title ?? "(未命名)",
+        stage: p.stage ?? 0,
+        status: p.status ?? "active",
+        updated: p.updated ?? "",
+      })),
+    },
+    showcaseTotal: showcase.totalItems,
+    buildsToday: buildsToday.totalItems,
+    estimatedCostTodayCny:
+      Math.round(buildsToday.totalItems * COST_PER_BUILD_CNY * 100) / 100,
+    quotaDailyBuilds: Number(process.env.QUOTA_DAILY_BUILDS ?? 0) || null,
+  });
+}
+
 export async function handleEngineStatus(
   ctx: GatewayContext,
 ): Promise<GatewayResult> {

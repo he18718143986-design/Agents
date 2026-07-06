@@ -26,6 +26,7 @@ Prototype that turns ideas into apps through a conversational, stage-gated workf
 - Platform accounts + cloud project storage use the reserved slug `platform` (`/pb/platform/`, collections: `projects` owner-scoped, `usage_log` server-only, `showcase` public-read). Frontend: `src/engine/platformClient.ts` + `projectStore.ts` (cloud when logged in, localStorage fallback; local projects auto-migrate to cloud on login). Note: `vite.config.ts` patches the pocketbase SDK's `async import(` method name to avoid Vite import-analysis mangling.
 - Build quota: set `QUOTA_DAILY_BUILDS=<n>` to require a platform login for real-engine builds and cap daily builds per account (401 without token, 429 over limit).
 - Legal draft pages at `/terms` and `/privacy`; landing showcase section renders real published works from the `showcase` collection with static fallback.
+- Ops admin dashboard at `/admin` (set `ADMIN_TOKEN` to enable; unset = disabled). `GET /prototype/api/admin/overview` with header `x-admin-token` aggregates platform users/projects/showcase/today's builds+cost via the platform superuser. Beta invitation page at `/beta`.
 
 ### Automated app check (acceptance evidence)
 

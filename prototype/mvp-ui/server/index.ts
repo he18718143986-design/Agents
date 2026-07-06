@@ -6,6 +6,7 @@ import express from "express";
 import httpProxy from "http-proxy";
 import {
   agentServerErrorHint,
+  handleAdminOverview,
   handleBuildBootstrap,
   handleCoachBootstrap,
   handleConversationUsage,
@@ -104,6 +105,14 @@ function gatewayErrorHandler(res: express.Response, error: unknown): void {
     .type("application/json")
     .send(JSON.stringify({ error: agentServerErrorHint(detail) }));
 }
+
+app.get("/prototype/api/admin/overview", async (req, res) => {
+  try {
+    send(res, await handleAdminOverview(ctx, req.header("x-admin-token")));
+  } catch (error) {
+    gatewayErrorHandler(res, error);
+  }
+});
 
 app.get("/prototype/api/engine-status", async (_req, res) => {
   try {

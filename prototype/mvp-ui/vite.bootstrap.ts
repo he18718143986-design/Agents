@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Connect } from "vite";
 import {
   agentServerErrorHint,
+  handleAdminOverview,
   handleBuildBootstrap,
   handleCoachBootstrap,
   handleConversationUsage,
@@ -44,6 +45,19 @@ export function createBootstrapMiddleware(repoRoot: string): Connect.NextHandleF
   const ctx: GatewayContext = { repoRoot, agentServer: AGENT_SERVER };
 
   return async (req, res, next) => {
+    if (req.method === "GET" && req.url === "/prototype/api/admin/overview") {
+      try {
+        writeResult(
+          res,
+          await handleAdminOverview(ctx, req.headers["x-admin-token"] as string | undefined),
+        );
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        writeResult(res, { status: 500, json: JSON.stringify({ error: detail }) });
+      }
+      return;
+    }
+
     if (req.method === "GET" && req.url === "/prototype/api/engine-status") {
       try {
         writeResult(res, await handleEngineStatus(ctx));
