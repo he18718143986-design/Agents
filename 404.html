@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stagent — You decide, Stagent delivers</title>
+    <script>
+      (function () {
+        var segment = 1;
+        var base = location.pathname
+          .split("/")
+          .slice(0, 1 + segment)
+          .join("/");
+        var rest = location.pathname.slice(base.length) || "/";
+        var target = base + "/index.html" + (rest === "/" ? "" : "#" + rest) + location.search + location.hash;
+        location.replace(target);
+      })();
+    </script>
+  </head>
+  <body>
+    <p>Redirecting…</p>
+  </body>
+</html>
