@@ -19,6 +19,8 @@ interface LeftSidebarProps {
   pathChoice: PathChoice;
   discoveryReady: boolean;
   requirementsComplete: boolean;
+  requirementsReadyButAiSilent: boolean;
+  onManualRequirementsComplete: () => void;
   selectedTechId: TechChoice;
   selectedStyleId: "A" | "B" | null;
   buildDone: boolean;
@@ -64,6 +66,8 @@ export function LeftSidebar({
   pathChoice,
   discoveryReady,
   requirementsComplete,
+  requirementsReadyButAiSilent,
+  onManualRequirementsComplete,
   selectedTechId,
   selectedStyleId,
   buildDone,
@@ -148,9 +152,26 @@ export function LeftSidebar({
     />
   );
 
+  // 人工兜底：字段齐全但 AI 未发就绪信号时，允许用户自行推进（实验 002 A2）
+  const manualAdvance = requirementsReadyButAiSilent ? (
+    <div className="rounded-xl border border-hairline bg-ink-softer/40 p-3 space-y-2">
+      <p className="text-xs leading-5 text-stone">
+        需求要点看起来已经齐全了。如果你觉得没问题，可以直接确认进入下一步。
+      </p>
+      <button
+        type="button"
+        onClick={onManualRequirementsComplete}
+        className="stagent-btn stagent-btn--primary w-full !py-2 !text-sm"
+      >
+        需求已齐全，确认
+      </button>
+    </div>
+  ) : null;
+
   const beforeInput = (
     <div className="space-y-2">
       {failurePlaybook}
+      {manualAdvance}
       {gateBar}
     </div>
   );

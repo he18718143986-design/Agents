@@ -16,7 +16,7 @@ Prototype that turns ideas into apps through a conversational, stage-gated workf
 
 - Lint: `cd prototype/mvp-ui && npm run lint` (oxlint).
 - Build: `cd prototype/mvp-ui && npm run build` (`tsc -b && vite build`).
-- Automated regression scripts live in `prototype/mvp-ui/tests/` (run with `npx tsx tests/<name>.ts`): `r14-gate-regression.ts` (reducer unit test), `app-assertions.ts <conversationId> <slug> [baseUrl]` (R6 persistence + R9 app check against a generated app; needs the dev/prod server + that build's PocketBase running; exit 0/1/2; set `BASIC_AUTH_USER`/`BASIC_AUTH_PASSWORD` if the server enables Basic Auth). `prototype/test_requirement_input.py` is a manual smoke script for the engine and needs an LLM API key.
+- Automated regression scripts live in `prototype/mvp-ui/tests/` (run with `npx tsx tests/<name>.ts`): `r14-gate-regression.ts` and `r16-requirements-fallback.ts` (reducer unit tests), `app-assertions.ts <conversationId> <slug> [baseUrl]` (R6 persistence + R9 app check against a generated app; needs the dev/prod server + that build's PocketBase running; exit 0/1/2; set `BASIC_AUTH_USER`/`BASIC_AUTH_PASSWORD` if the server enables Basic Auth). `prototype/test_requirement_input.py` is a manual smoke script for the engine and needs an LLM API key.
 
 ### baas-mvp data tier (PocketBase)
 
