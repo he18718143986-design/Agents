@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { AdminPage } from "./pages/AdminPage";
 import { AppShell } from "./pages/AppShell";
 import { BetaInvitePage } from "./pages/BetaInvitePage";
 import { LandingPage } from "./pages/LandingPage";
@@ -10,6 +11,7 @@ export default function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/app/*" element={<AppShell />} />
       <Route path="/beta" element={<BetaInvitePage />} />
+      <Route path="/admin" element={<AdminPage />} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
